@@ -9,14 +9,6 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { MONTHLY_SPENDING, MONTHLY_INCOME } from "@/lib/data";
-
-const data = MONTHLY_SPENDING.map((item, i) => ({
-  month: item.month,
-  spending: item.amount,
-  income: MONTHLY_INCOME[i]?.amount || 0,
-}));
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload) return null;
@@ -62,7 +54,13 @@ function CustomTooltip({ active, payload, label }: any) {
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-export default function SpendingChart() {
+type ChartData = {
+  month: string;
+  spending: number;
+  income: number;
+};
+
+export default function SpendingChart({ data }: { data: ChartData[] }) {
   return (
     <div className="glass-card" style={{ padding: 24 }}>
       <div style={{ marginBottom: 20 }}>

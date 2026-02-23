@@ -1,12 +1,15 @@
 "use client";
 
-import { getTransactions } from "@/lib/data";
+import { Transaction } from "@/lib/types";
 import { CATEGORIES } from "@/lib/categorizer";
 import { formatCurrency, getRelativeTime } from "@/lib/utils";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 
-export default function RecentTransactions() {
-  const transactions = getTransactions().slice(0, 6);
+export default function RecentTransactions({
+  transactions,
+}: {
+  transactions: Transaction[];
+}) {
 
   return (
     <div className="glass-card" style={{ padding: 24 }}>

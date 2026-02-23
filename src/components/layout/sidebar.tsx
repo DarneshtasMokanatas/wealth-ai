@@ -28,6 +28,7 @@ export default function Sidebar() {
       {isOpen && (
         <div
           className="sidebar-overlay"
+          aria-label="Close sidebar overlay"
           onClick={close}
         />
       )}
@@ -77,7 +78,7 @@ export default function Sidebar() {
           </div>
 
           {/* Close button — only visible on mobile */}
-          <button className="sidebar-close-btn" onClick={close}>
+          <button className="sidebar-close-btn" onClick={close} aria-label="Close sidebar">
             <X size={20} color="#a1a1aa" />
           </button>
         </div>

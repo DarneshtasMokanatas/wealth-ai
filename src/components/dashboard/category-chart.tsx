@@ -1,7 +1,6 @@
 "use client";
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { getCategoryBreakdown } from "@/lib/data";
 import { formatCurrency } from "@/lib/utils";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -32,8 +31,11 @@ function CustomTooltip({ active, payload }: any) {
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
-export default function CategoryChart() {
-  const data = getCategoryBreakdown();
+export default function CategoryChart({
+  data,
+}: {
+  data: { category: string; amount: number; color: string; icon: string }[];
+}) {
   const total = data.reduce((sum, d) => sum + d.amount, 0);
 
   return (
@@ -111,7 +113,7 @@ export default function CategoryChart() {
                 {formatCurrency(item.amount)}
               </span>
               <span style={{ color: "#71717a", fontSize: 12 }}>
-                {((item.amount / total) * 100).toFixed(0)}%
+                {total > 0 ? ((item.amount / total) * 100).toFixed(0) : 0}%
               </span>
             </div>
           </div>

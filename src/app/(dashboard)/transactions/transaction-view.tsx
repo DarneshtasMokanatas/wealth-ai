@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { getTransactions, addTransaction, deleteTransaction } from "@/lib/data";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { addTransaction, deleteTransaction } from "./actions";
 import { parseExpenseInput, CATEGORIES } from "@/lib/categorizer";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import {
@@ -14,19 +15,27 @@ import {
 } from "lucide-react";
 import { Transaction, CategoryType } from "@/lib/types";
 
-export default function TransactionsPage() {
-  const [, forceUpdate] = useState(0);
-  const refresh = useCallback(() => forceUpdate((n) => n + 1), []);
-
+export default function TransactionsView({
+  initialTransactions,
+}: {
+  initialTransactions: Transaction[];
+}) {
+  const router = useRouter();
   const [input, setInput] = useState("");
-  const [preview, setPreview] = useState<ReturnType<typeof parseExpenseInput>>(null);
+  const [preview, setPreview] = useState<ReturnType<
+    typeof parseExpenseInput
+  >>(null);
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<{
+    type: "success" | "error";
+    message: string;
+  } | null>(null);
 
-  const transactions = getTransactions();
-
-  const filteredTransactions = transactions.filter((tx) => {
-    if (filterCategory !== "all" && tx.category !== filterCategory) return false;
+  const filteredTransactions = initialTransactions.filter((tx) => {
+    if (filterCategory !== "all" && tx.category !== filterCategory)
+      return false;
     if (filterType !== "all" && tx.type !== filterType) return false;
     return true;
   });
@@ -40,25 +49,41 @@ export default function TransactionsPage() {
     }
   }
 
-  function handleAddExpense() {
+  async function handleAddExpense() {
     if (!preview) return;
+    setLoading(true);
 
-    addTransaction({
+    const result = await addTransaction({
       description: preview.description,
       amount: preview.amount,
       type: preview.type,
       category: preview.category,
-      date: new Date().toISOString().split("T")[0],
+      date: new Date().toISOString(),
     });
 
+    if (result?.error) {
+      setStatus({ type: "error", message: result.error });
+      setLoading(false);
+      return;
+    }
+
+    setStatus({ type: "success", message: "Transaction added successfully." });
     setInput("");
     setPreview(null);
-    refresh();
+    setLoading(false);
+    router.refresh();
   }
 
-  function handleDelete(id: string) {
-    deleteTransaction(id);
-    refresh();
+  async function handleDelete(id: string) {
+    if (confirm("Are you sure you want to delete this transaction?")) {
+      const result = await deleteTransaction(id);
+      if (result?.error) {
+        setStatus({ type: "error", message: result.error });
+        return;
+      }
+      setStatus({ type: "success", message: "Transaction deleted successfully." });
+      router.refresh();
+    }
   }
 
   const totalExpenses = filteredTransactions
@@ -85,15 +110,36 @@ export default function TransactionsPage() {
           Transactions
         </h2>
         <p style={{ fontSize: 14, color: "#71717a" }}>
-          Add expenses using natural language — our AI categorizes them automatically.
+          Add expenses using natural language — our AI categorizes them
+          automatically.
         </p>
+        {status && (
+          <div
+            role="status"
+            aria-live="polite"
+            style={{
+              marginTop: 12,
+              padding: "10px 12px",
+              borderRadius: 10,
+              fontSize: 13,
+              color: status.type === "error" ? "#fca5a5" : "#6ee7b7",
+              border:
+                status.type === "error"
+                  ? "1px solid rgba(239, 68, 68, 0.25)"
+                  : "1px solid rgba(16, 185, 129, 0.25)",
+              background:
+                status.type === "error"
+                  ? "rgba(239, 68, 68, 0.1)"
+                  : "rgba(16, 185, 129, 0.1)",
+            }}
+          >
+            {status.message}
+          </div>
+        )}
       </div>
 
       {/* Smart Expense Input */}
-      <div
-        className="glass-card"
-        style={{ padding: 24, marginBottom: 24 }}
-      >
+      <div className="glass-card" style={{ padding: 24, marginBottom: 24 }}>
         <div
           style={{
             display: "flex",
@@ -118,6 +164,7 @@ export default function TransactionsPage() {
           <div style={{ flex: 1 }}>
             <input
               type="text"
+              aria-label="Add transaction using natural language"
               className="smart-input"
               placeholder='Try: "Spent $12 on a burrito" or "Earned $800 freelancing"'
               value={input}
@@ -125,6 +172,7 @@ export default function TransactionsPage() {
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleAddExpense();
               }}
+              disabled={loading}
             />
 
             {/* Live Preview */}
@@ -160,7 +208,11 @@ export default function TransactionsPage() {
                   {formatCurrency(preview.amount)}
                 </span>
                 <span
-                  style={{ fontSize: 13, color: "#a1a1aa", fontStyle: "italic" }}
+                  style={{
+                    fontSize: 13,
+                    color: "#a1a1aa",
+                    fontStyle: "italic",
+                  }}
                 >
                   {preview.description}
                 </span>
@@ -171,15 +223,15 @@ export default function TransactionsPage() {
           <button
             className="btn-primary"
             onClick={handleAddExpense}
-            disabled={!preview}
+            disabled={!preview || loading}
             style={{
-              opacity: preview ? 1 : 0.4,
+              opacity: preview && !loading ? 1 : 0.4,
               height: 48,
               minWidth: 120,
             }}
           >
             <Plus size={16} />
-            Add
+            {loading ? "Adding..." : "Add"}
           </button>
         </div>
       </div>
@@ -195,12 +247,20 @@ export default function TransactionsPage() {
           gap: 16,
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 12,
+            flexWrap: "wrap",
+          }}
+        >
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Filter size={14} color="#71717a" />
             <span style={{ fontSize: 13, color: "#71717a" }}>Filters:</span>
           </div>
           <select
+            aria-label="Filter by transaction type"
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
             style={{
@@ -219,6 +279,7 @@ export default function TransactionsPage() {
           </select>
 
           <select
+            aria-label="Filter by category"
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
             style={{
@@ -242,7 +303,13 @@ export default function TransactionsPage() {
 
         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 11, color: "#71717a", textTransform: "uppercase" }}>
+            <div
+              style={{
+                fontSize: 11,
+                color: "#71717a",
+                textTransform: "uppercase",
+              }}
+            >
               Income
             </div>
             <div style={{ fontSize: 15, fontWeight: 700, color: "#10b981" }}>
@@ -250,7 +317,13 @@ export default function TransactionsPage() {
             </div>
           </div>
           <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: 11, color: "#71717a", textTransform: "uppercase" }}>
+            <div
+              style={{
+                fontSize: 11,
+                color: "#71717a",
+                textTransform: "uppercase",
+              }}
+            >
               Expenses
             </div>
             <div style={{ fontSize: 15, fontWeight: 700, color: "#ef4444" }}>
@@ -396,6 +469,8 @@ function TransactionRow({
 
       {/* Actions */}
       <button
+        aria-label={`Delete transaction ${tx.description}`}
+        title="Delete transaction"
         onClick={() => onDelete(tx.id)}
         style={{
           background: "transparent",

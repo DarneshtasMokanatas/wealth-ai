@@ -1,12 +1,22 @@
 "use client";
 
 import { formatCurrency } from "@/lib/utils";
-import { LucideIcon } from "lucide-react";
+import { Flame, PiggyBank, TrendingDown, Wallet } from "lucide-react";
+
+const cardIcons = {
+  Wallet,
+  TrendingDown,
+  Flame,
+  PiggyBank,
+};
+
+type StatCardIconName = keyof typeof cardIcons;
 
 interface StatCardProps {
   label: string;
   value: string | number;
-  icon: LucideIcon;
+  // pass the icon name from server components (plain string)
+  icon: StatCardIconName;
   trend?: {
     value: number;
     isPositive: boolean;
@@ -19,12 +29,13 @@ interface StatCardProps {
 export default function StatCard({
   label,
   value,
-  icon: Icon,
+  icon,
   trend,
   iconColor = "#10b981",
   prefix = "",
   suffix = "",
 }: StatCardProps) {
+  const Icon = cardIcons[icon] ?? Wallet;
   return (
     <div className="glass-card stat-card" style={{ padding: 24 }}>
       <div
