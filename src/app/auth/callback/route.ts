@@ -16,6 +16,8 @@ export async function GET(request: Request) {
     }
   }
 
-  const safeNext = next.startsWith('/') ? next : '/'
+  // Reject protocol-relative URLs (//evil.com) and anything that isn't
+  // a plain relative path. Only a single leading slash is allowed.
+  const safeNext = /^\/[^/\\]/.test(next) ? next : '/'
   return NextResponse.redirect(new URL(safeNext, requestUrl.origin))
 }

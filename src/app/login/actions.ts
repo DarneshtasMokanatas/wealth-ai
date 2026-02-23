@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation'
 
 import { createClient } from '@/lib/supabase/server'
 import { env } from '@/lib/env'
+import { validatePassword } from '@/lib/validation'
 
 const buildAuthRedirect = (params: Record<string, string>) => {
   const searchParams = new URLSearchParams(params)
@@ -13,20 +14,30 @@ const buildAuthRedirect = (params: Record<string, string>) => {
 }
 
 async function getBaseUrl() {
-  const headerStore = await headers()
-  const origin = headerStore.get('origin')
-  if (origin) {
-    return origin
+  // ── Security: always prefer the explicit allow-listed origin ──────
+  // NEXT_PUBLIC_SITE_URL must be set in production. The header-derived
+  // fallback is intentionally restricted to localhost so that a spoofed
+  // x-forwarded-host header can never poison a password-reset link in
+  // production.
+  if (env.siteUrl) {
+    return env.siteUrl.replace(/\/$/, '')
   }
 
-  const host = headerStore.get('x-forwarded-host') ?? headerStore.get('host')
-  const protocol = headerStore.get('x-forwarded-proto') ?? 'http'
+  // Dev-only fallback — accept host header only when it is localhost / 127.x
+  const headerStore = await headers()
+  const host = headerStore.get('x-forwarded-host') ?? headerStore.get('host') ?? ''
+  const isLocalhost =
+    host === 'localhost' ||
+    host.startsWith('localhost:') ||
+    /^127\.0\.0\.\d+/.test(host)
 
-  if (host) {
+  if (isLocalhost) {
+    const protocol = headerStore.get('x-forwarded-proto') ?? 'http'
     return `${protocol}://${host}`
   }
 
-  return env.siteUrl || 'http://localhost:3000'
+  // Hard-coded safe fallback — never an attacker-controlled value
+  return 'http://localhost:3000'
 }
 
 export async function login(formData: FormData) {
@@ -36,6 +47,11 @@ export async function login(formData: FormData) {
   const data = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
+  }
+
+  const passwordError = validatePassword(data.password)
+  if (passwordError) {
+    return redirect(buildAuthRedirect({ mode, error: passwordError }))
   }
 
   const { error } = await supabase.auth.signInWithPassword(data)
@@ -55,6 +71,11 @@ export async function signup(formData: FormData) {
   const data = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
+  }
+
+  const passwordError = validatePassword(data.password)
+  if (passwordError) {
+    return redirect(buildAuthRedirect({ mode, error: passwordError }))
   }
 
   const { data: { session }, error } = await supabase.auth.signUp(data)

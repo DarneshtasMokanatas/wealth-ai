@@ -71,8 +71,10 @@ function LoginForm() {
     if (mode !== 'forgot') {
       if (!password) {
         nextErrors.password = 'Password is required.'
-      } else if (password.length < 6) {
-        nextErrors.password = 'Password must be at least 6 characters.'
+      } else if (password.length < 12) {
+        nextErrors.password = 'Password must be at least 12 characters.'
+      } else if (password.length > 128) {
+        nextErrors.password = 'Password must be no more than 128 characters.'
       }
     }
 
@@ -156,7 +158,8 @@ function LoginForm() {
                   name="password"
                   type="password"
                   required
-                  minLength={6}
+                  minLength={12}
+                  maxLength={128}
                   autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                   placeholder="Password"
                   className={`auth-input ${fieldErrors.password ? 'auth-input-error' : ''}`}
