@@ -1,33 +1,72 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Bell, Search, Menu, LogOut } from "lucide-react";
+import { Bell, Search, Menu, LogOut, Sun, Moon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSidebar } from "./sidebar-context";
+import { useTheme } from "./theme-context";
 import { createClient } from "@/lib/supabase/client";
 
-export default function Header() {
+type UserProfile = {
+  displayName: string;
+  email: string;
+  avatarUrl: string | null;
+};
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  body: string;
+  time: string;
+  severity?: "warning" | "exceeded";
+}
+
+export default function Header({
+  initialNotifications = [],
+}: {
+  initialNotifications?: AppNotification[];
+}) {
   const { toggle } = useSidebar();
+  const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [notifications, setNotifications] = useState([
-    {
-      id: "goal-reminder",
-      title: "Goal reminder",
-      body: "Add a contribution to stay on track this week.",
-      time: "2h ago",
-    },
-    {
-      id: "spending-insight",
-      title: "Spending insight",
-      body: "Dining spend is up 12% compared to last week.",
-      time: "1d ago",
-    },
-  ]);
+  const [userProfile, setUserProfile] = useState<UserProfile>({ displayName: "", email: "", avatarUrl: null });
+  const [notifications, setNotifications] = useState<AppNotification[]>(initialNotifications);
+
+  // Sync when server re-renders with fresh data (e.g. after adding a transaction)
+  useEffect(() => {
+    setNotifications(initialNotifications);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(initialNotifications)]);
 
   const notificationsRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    async function loadProfile() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("display_name, avatar_url")
+        .eq("id", user.id)
+        .single();
+
+      const meta = user.user_metadata ?? {};
+      setUserProfile({
+        displayName:
+          profile?.display_name ||
+          (typeof meta.display_name === "string" ? meta.display_name : "") ||
+          user.email?.split("@")[0] ||
+          "User",
+        email: user.email ?? "",
+        avatarUrl: profile?.avatar_url || null,
+      });
+    }
+    loadProfile();
+  }, [supabase]);
 
   useEffect(() => {
     if (!isNotificationsOpen) return;
@@ -57,12 +96,12 @@ export default function Header() {
       <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0, flex: 1 }}>
         {/* Hamburger — visible only on mobile */}
         <button className="hamburger-btn" onClick={toggle} aria-label="Open sidebar menu">
-          <Menu size={20} color="#fafafa" />
+          <Menu size={20} color="var(--color-text-primary)" />
         </button>
 
         {/* Search */}
         <div className="header-search" style={{ maxWidth: 340, width: "100%" }}>
-          <Search size={16} color="#71717a" />
+          <Search size={16} color="var(--color-text-muted)" />
           <input
             type="text"
             placeholder="Search transactions..."
@@ -70,7 +109,7 @@ export default function Header() {
               background: "transparent",
               border: "none",
               outline: "none",
-              color: "#fafafa",
+              color: "var(--color-text-primary)",
               fontSize: 14,
               width: "100%",
             }}
@@ -89,8 +128,8 @@ export default function Header() {
               width: 38,
               height: 38,
               borderRadius: 10,
-              background: "#18181b",
-              border: isNotificationsOpen ? "1px solid #10b981" : "1px solid #27272a",
+              background: "var(--color-bg-card)",
+              border: isNotificationsOpen ? "1px solid #10b981" : "1px solid var(--color-border)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -100,7 +139,7 @@ export default function Header() {
               flexShrink: 0,
             }}
           >
-            <Bell size={16} color="#a1a1aa" />
+            <Bell size={16} color="var(--color-text-secondary)" />
             {unreadCount > 0 && (
               <div
                 style={{
@@ -111,7 +150,7 @@ export default function Header() {
                   height: 7,
                   borderRadius: "50%",
                   background: "#10b981",
-                  border: "2px solid #18181b",
+                  border: "2px solid var(--color-bg-card)",
                 }}
               />
             )}
@@ -126,8 +165,8 @@ export default function Header() {
                 top: 74,
                 right: 20,
                 width: "min(320px, calc(100vw - 24px))",
-                background: "#111217",
-                border: "1px solid #2a2c34",
+                background: "var(--color-bg-elevated)",
+                border: "1px solid var(--color-border)",
                 borderRadius: 12,
                 boxShadow: "0 20px 40px rgba(0,0,0,0.4)",
                 padding: 12,
@@ -137,7 +176,7 @@ export default function Header() {
               }}
             >
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                <span style={{ color: "#fafafa", fontWeight: 600, fontSize: 14 }}>Notifications</span>
+                <span style={{ color: "var(--color-text-primary)", fontWeight: 600, fontSize: 14 }}>Notifications</span>
                 {notifications.length > 0 && (
                   <button
                     type="button"
@@ -158,10 +197,10 @@ export default function Header() {
               {notifications.length === 0 ? (
                 <div
                   style={{
-                    border: "1px solid #27272a",
+                    border: "1px solid var(--color-border)",
                     borderRadius: 10,
                     padding: 14,
-                    color: "#a1a1aa",
+                    color: "var(--color-text-secondary)",
                     fontSize: 13,
                   }}
                 >
@@ -173,15 +212,29 @@ export default function Header() {
                     <div
                       key={item.id}
                       style={{
-                        border: "1px solid #27272a",
+                        border: "1px solid var(--color-border)",
                         borderRadius: 10,
                         padding: 10,
-                        background: "rgba(24, 24, 27, 0.7)",
+                        background: "var(--color-bg-hover-strong)",
                       }}
                     >
-                      <div style={{ color: "#fafafa", fontSize: 13, fontWeight: 600, marginBottom: 4 }}>{item.title}</div>
-                      <div style={{ color: "#a1a1aa", fontSize: 12, marginBottom: 6 }}>{item.body}</div>
-                      <div style={{ color: "#71717a", fontSize: 11 }}>{item.time}</div>
+                      <div
+                        style={{
+                          color:
+                            item.severity === "exceeded"
+                              ? "#fca5a5"
+                              : item.severity === "warning"
+                              ? "#fcd34d"
+                              : "var(--color-text-primary)",
+                          fontSize: 13,
+                          fontWeight: 600,
+                          marginBottom: 4,
+                        }}
+                      >
+                        {item.title}
+                      </div>
+                      <div style={{ color: "var(--color-text-secondary)", fontSize: 12, marginBottom: 6 }}>{item.body}</div>
+                      <div style={{ color: "var(--color-text-muted)", fontSize: 11 }}>{item.time}</div>
                     </div>
                   ))}
                 </div>
@@ -189,6 +242,32 @@ export default function Header() {
             </div>
           )}
         </div>
+
+        {/* Theme toggle */}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 10,
+            background: "var(--color-bg-card)",
+            border: "1px solid var(--color-border)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            flexShrink: 0,
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#10b981"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--color-border)"; }}
+        >
+          {theme === "dark"
+            ? <Sun size={16} color="var(--color-text-secondary)" />
+            : <Moon size={16} color="var(--color-text-secondary)" />}
+        </button>
 
         <button
           type="button"
@@ -198,9 +277,9 @@ export default function Header() {
             height: 38,
             padding: "0 12px",
             borderRadius: 10,
-            background: "#18181b",
-            border: "1px solid #27272a",
-            color: "#fafafa",
+            background: "var(--color-bg-card)",
+            border: "1px solid var(--color-border)",
+            color: "var(--color-text-primary)",
             display: "flex",
             alignItems: "center",
             gap: 8,
@@ -228,15 +307,21 @@ export default function Header() {
               fontWeight: 700,
               color: "#022c22",
               flexShrink: 0,
+              overflow: "hidden",
             }}
           >
-            D
+            {userProfile.avatarUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={userProfile.avatarUrl} alt={userProfile.displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            ) : (
+              userProfile.displayName.charAt(0).toUpperCase() || "?"
+            )}
           </div>
           <div className="header-avatar-text">
-            <div style={{ fontSize: 14, fontWeight: 600, color: "#fafafa" }}>
-              Darnesh
+            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--color-text-primary)" }}>
+              {userProfile.displayName || "Loading..."}
             </div>
-            <div style={{ fontSize: 12, color: "#71717a" }}>Pro Account</div>
+            <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{userProfile.email || ""}</div>
           </div>
         </div>
       </div>

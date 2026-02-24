@@ -31,6 +31,65 @@
   --primary: #10b981;
   --primary-foreground: #022c22;
   --emerald-glow: rgba(16, 185, 129, 0.15);
+
+  /* ── Design tokens (dark default) ─────────────────────────────── */
+  --color-bg:            #09090b;
+  --color-bg-card:       #18181b;
+  --color-bg-elevated:   #111217;
+  --color-bg-input:      #09090b;
+  --color-bg-secondary:  #18181b;
+  --color-bg-hover:      rgba(39, 39, 42, 0.3);
+  --color-bg-hover-strong: rgba(39, 39, 42, 0.8);
+  --color-border:        #27272a;
+  --color-border-medium: #3f3f46;
+  --color-border-subtle: rgba(63, 63, 70, 0.5);
+  --color-text-primary:  #fafafa;
+  --color-text-secondary:#a1a1aa;
+  --color-text-muted:    #71717a;
+  --color-text-dim:      #52525b;
+  --color-scrollbar:     #3f3f46;
+  --color-scrollbar-hover: #52525b;
+  --color-sidebar-bg:    rgba(9, 9, 11, 0.95);
+  --color-header-bg:     rgba(9, 9, 11, 0.8);
+  --color-glass-bg:      linear-gradient(135deg, rgba(24,24,27,0.8), rgba(24,24,27,0.4));
+  --color-modal-bg:      #18181b;
+  --color-input-bg:      rgba(24, 24, 27, 0.8);
+}
+
+/* ── Light theme overrides ─────────────────────────────────────────── */
+[data-theme="light"] {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --muted: #e2e8f0;
+  --muted-foreground: #64748b;
+  --border: #e2e8f0;
+  --accent: #e2e8f0;
+  --accent-foreground: #0f172a;
+  --emerald-glow: rgba(16, 185, 129, 0.1);
+
+  --color-bg:            #f8fafc;
+  --color-bg-card:       #ffffff;
+  --color-bg-elevated:   #f1f5f9;
+  --color-bg-input:      #ffffff;
+  --color-bg-secondary:  #f1f5f9;
+  --color-bg-hover:      rgba(0, 0, 0, 0.04);
+  --color-bg-hover-strong: rgba(0, 0, 0, 0.06);
+  --color-border:        #e2e8f0;
+  --color-border-medium: #cbd5e1;
+  --color-border-subtle: rgba(0, 0, 0, 0.1);
+  --color-text-primary:  #0f172a;
+  --color-text-secondary:#475569;
+  --color-text-muted:    #64748b;
+  --color-text-dim:      #94a3b8;
+  --color-scrollbar:     #cbd5e1;
+  --color-scrollbar-hover: #94a3b8;
+  --color-sidebar-bg:    rgba(255, 255, 255, 0.98);
+  --color-header-bg:     rgba(248, 250, 252, 0.9);
+  --color-glass-bg:      linear-gradient(135deg, rgba(255,255,255,0.9), rgba(255,255,255,0.7));
+  --color-modal-bg:      #ffffff;
+  --color-input-bg:      rgba(255, 255, 255, 0.9);
 }
 
 /* ─── Base ────────────────────────────────────────────────────────── */
@@ -64,20 +123,20 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+  background: var(--color-scrollbar);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #52525b;
+  background: var(--color-scrollbar-hover);
 }
 
 /* ─── Glassmorphism Cards ─────────────────────────────────────────── */
 .glass-card {
-  background: linear-gradient(135deg, rgba(24, 24, 27, 0.8), rgba(24, 24, 27, 0.4));
+  background: var(--color-glass-bg);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(63, 63, 70, 0.5);
+  border: 1px solid var(--color-border-subtle);
   border-radius: 16px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -116,7 +175,7 @@ body {
   gap: 12px;
   padding: 10px 16px;
   border-radius: 10px;
-  color: #a1a1aa;
+  color: var(--color-text-secondary);
   text-decoration: none;
   font-size: 14px;
   font-weight: 500;
@@ -124,8 +183,8 @@ body {
 }
 
 .sidebar-link:hover {
-  background: rgba(39, 39, 42, 0.8);
-  color: #fafafa;
+  background: var(--color-bg-hover-strong);
+  color: var(--color-text-primary);
 }
 
 .sidebar-link.active {
@@ -137,7 +196,7 @@ body {
 .progress-bar {
   height: 10px;
   border-radius: 5px;
-  background: #27272a;
+  background: var(--color-border);
   overflow: hidden;
   position: relative;
 }
@@ -180,25 +239,25 @@ body {
   border-radius: 9999px;
   font-size: 12px;
   font-weight: 500;
-  background: rgba(39, 39, 42, 0.8);
-  border: 1px solid rgba(63, 63, 70, 0.5);
+  background: var(--color-bg-hover-strong);
+  border: 1px solid var(--color-border-subtle);
 }
 
 /* ─── Input ───────────────────────────────────────────────────────── */
 .smart-input {
   width: 100%;
-  background: rgba(24, 24, 27, 0.8);
-  border: 1px solid #3f3f46;
+  background: var(--color-input-bg);
+  border: 1px solid var(--color-border-medium);
   border-radius: 12px;
   padding: 14px 18px;
-  color: #fafafa;
+  color: var(--color-text-primary);
   font-size: 15px;
   outline: none;
   transition: all 0.2s ease;
 }
 
 .smart-input::placeholder {
-  color: #71717a;
+  color: var(--color-text-muted);
 }
 
 .smart-input:focus {
@@ -242,16 +301,16 @@ body {
   border-radius: 10px;
   font-size: 14px;
   font-weight: 500;
-  color: #fafafa;
-  background: rgba(39, 39, 42, 0.8);
-  border: 1px solid #3f3f46;
+  color: var(--color-text-primary);
+  background: var(--color-bg-hover-strong);
+  border: 1px solid var(--color-border-medium);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .btn-secondary:hover {
   background: rgba(63, 63, 70, 0.8);
-  border-color: #52525b;
+  border-color: var(--color-text-dim);
 }
 
 .btn-danger {
@@ -289,8 +348,8 @@ body {
 }
 
 .modal-content {
-  background: #18181b;
-  border: 1px solid #3f3f46;
+  background: var(--color-modal-bg);
+  border: 1px solid var(--color-border-medium);
   border-radius: 16px;
   padding: 28px;
   width: 90%;
@@ -589,8 +648,8 @@ body {
 .sidebar {
   width: 260px;
   min-height: 100vh;
-  background: rgba(9, 9, 11, 0.95);
-  border-right: 1px solid #27272a;
+  background: var(--color-sidebar-bg);
+  border-right: 1px solid var(--color-border);
   padding: 24px 16px;
   display: flex;
   flex-direction: column;
@@ -615,13 +674,13 @@ body {
 .app-header {
   height: 64px;
   width: 100%;
-  border-bottom: 1px solid #27272a;
+  border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   padding: 0 32px;
-  background: rgba(9, 9, 11, 0.8);
+  background: var(--color-header-bg);
   backdrop-filter: blur(12px);
   position: sticky;
   top: 0;
@@ -640,8 +699,8 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: #18181b;
-  border: 1px solid #27272a;
+  background: var(--color-bg-card);
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   padding: 8px 14px;
   width: 320px;

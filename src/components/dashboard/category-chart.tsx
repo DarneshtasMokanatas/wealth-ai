@@ -10,8 +10,8 @@ function CustomTooltip({ active, payload }: any) {
   return (
     <div
       style={{
-        background: "#18181b",
-        border: "1px solid #3f3f46",
+        background: "var(--color-bg-card)",
+        border: "1px solid var(--color-border-medium)",
         borderRadius: 10,
         padding: "10px 14px",
         boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
@@ -19,7 +19,7 @@ function CustomTooltip({ active, payload }: any) {
     >
       <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
         <span>{data.icon}</span>
-        <span style={{ fontSize: 13, fontWeight: 600, color: "#fafafa" }}>
+        <span style={{ fontSize: 13, fontWeight: 600, color: "var(--color-text-primary)" }}>
           {data.category}
         </span>
       </div>
@@ -45,13 +45,13 @@ export default function CategoryChart({
           style={{
             fontSize: 16,
             fontWeight: 600,
-            color: "#fafafa",
+            color: "var(--color-text-primary)",
             marginBottom: 4,
           }}
         >
           Spending by Category
         </h3>
-        <p style={{ fontSize: 13, color: "#71717a" }}>
+        <p style={{ fontSize: 13, color: "var(--color-text-muted)" }}>
           Where your money goes
         </p>
       </div>
@@ -106,13 +106,13 @@ export default function CategoryChart({
                   background: item.color,
                 }}
               />
-              <span style={{ color: "#a1a1aa" }}>{item.category}</span>
+              <span style={{ color: "var(--color-text-secondary)" }}>{item.category}</span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <span style={{ color: "#fafafa", fontWeight: 600 }}>
+              <span style={{ color: "var(--color-text-primary)", fontWeight: 600 }}>
                 {formatCurrency(item.amount)}
               </span>
-              <span style={{ color: "#71717a", fontSize: 12 }}>
+              <span style={{ color: "var(--color-text-muted)", fontSize: 12 }}>
                 {total > 0 ? ((item.amount / total) * 100).toFixed(0) : 0}%
               </span>
             </div>

@@ -40,7 +40,7 @@ function LoginForm() {
     queryMode === 'signup' || queryMode === 'forgot' || queryMode === 'login' ? queryMode : 'login'
 
   const [mode, setMode] = useState<AuthMode>(initialMode)
-  const [fieldErrors, setFieldErrors] = useState<{ email?: string; password?: string }>({})
+  const [fieldErrors, setFieldErrors] = useState<{ displayName?: string; phone?: string; email?: string; password?: string }>({})
   const [clientMessage, setClientMessage] = useState<string | null>(null)
 
   const queryError = searchParams.get('error')
@@ -58,9 +58,25 @@ function LoginForm() {
   }
 
   const validate = (formData: FormData) => {
+    const displayName = String(formData.get('display_name') ?? '').trim()
+    const phone = String(formData.get('phone_number') ?? '').trim()
     const email = String(formData.get('email') ?? '').trim()
     const password = String(formData.get('password') ?? '')
-    const nextErrors: { email?: string; password?: string } = {}
+    const nextErrors: { displayName?: string; phone?: string; email?: string; password?: string } = {}
+
+    if (mode === 'signup') {
+      if (!displayName) {
+        nextErrors.displayName = 'Display name is required.'
+      } else if (displayName.length > 50) {
+        nextErrors.displayName = 'Display name must be 50 characters or fewer.'
+      }
+
+      if (!phone) {
+        nextErrors.phone = 'Phone number is required.'
+      } else if (!/^(\+?60|0)1[0-9][\s-]?\d{7,8}$/.test(phone.replace(/\s/g, ''))) {
+        nextErrors.phone = 'Enter a valid Malaysian number (e.g. 012-3456789).'
+      }
+    }
 
     if (!email) {
       nextErrors.email = 'Email is required.'
@@ -130,6 +146,43 @@ function LoginForm() {
                   </div>
                 )}
               </div>
+            )}
+
+            {mode === 'signup' && (
+              <>
+                <div>
+                  <label htmlFor="display_name" className="auth-label">
+                    Display name
+                  </label>
+                  <input
+                    id="display_name"
+                    name="display_name"
+                    type="text"
+                    required
+                    maxLength={50}
+                    autoComplete="nickname"
+                    placeholder="How should we call you?"
+                    className={`auth-input ${fieldErrors.displayName ? 'auth-input-error' : ''}`}
+                  />
+                  {fieldErrors.displayName && <p className="auth-field-error">{fieldErrors.displayName}</p>}
+                </div>
+
+                <div>
+                  <label htmlFor="phone_number" className="auth-label">
+                    Phone number
+                  </label>
+                  <input
+                    id="phone_number"
+                    name="phone_number"
+                    type="tel"
+                    required
+                    autoComplete="tel"
+                    placeholder="012-3456789"
+                    className={`auth-input ${fieldErrors.phone ? 'auth-input-error' : ''}`}
+                  />
+                  {fieldErrors.phone && <p className="auth-field-error">{fieldErrors.phone}</p>}
+                </div>
+              </>
             )}
 
             <div>

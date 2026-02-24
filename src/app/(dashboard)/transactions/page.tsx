@@ -1,8 +1,11 @@
-import { getTransactions } from "@/lib/data";
+import { getTransactions, getCategories } from "@/lib/data";
 import TransactionsView from "./transaction-view";
 
 export default async function TransactionsPage() {
-  const transactions = await getTransactions();
+  const [transactions, categories] = await Promise.all([
+    getTransactions(),
+    getCategories(),
+  ]);
 
-  return <TransactionsView initialTransactions={transactions} />;
+  return <TransactionsView initialTransactions={transactions} categories={categories} />;
 }

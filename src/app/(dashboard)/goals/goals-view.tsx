@@ -129,14 +129,14 @@ export default function GoalsView({ initialGoals }: { initialGoals: Goal[] }) {
             style={{
               fontSize: 24,
               fontWeight: 700,
-              color: "#fafafa",
+              color: "var(--color-text-primary)",
               marginBottom: 4,
               letterSpacing: "-0.02em",
             }}
           >
             Savings Goals
           </h2>
-          <p style={{ fontSize: 14, color: "#71717a" }}>
+          <p style={{ fontSize: 14, color: "var(--color-text-muted)" }}>
             Track your progress towards financial milestones.
           </p>
           {status && (
@@ -172,23 +172,23 @@ export default function GoalsView({ initialGoals }: { initialGoals: Goal[] }) {
       {/* Summary Cards */}
       <div className="stat-grid-3">
         <div className="glass-card stat-card" style={{ padding: 20 }}>
-          <div style={{ fontSize: 13, color: "#a1a1aa", marginBottom: 6 }}>
+          <div style={{ fontSize: 13, color: "var(--color-text-secondary)", marginBottom: 6 }}>
             Active Goals
           </div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: "#fafafa" }}>
+          <div style={{ fontSize: 28, fontWeight: 700, color: "var(--color-text-primary)" }}>
             {goals.length}
           </div>
         </div>
         <div className="glass-card stat-card" style={{ padding: 20 }}>
-          <div style={{ fontSize: 13, color: "#a1a1aa", marginBottom: 6 }}>
+          <div style={{ fontSize: 13, color: "var(--color-text-secondary)", marginBottom: 6 }}>
             Total Target
           </div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: "#fafafa" }}>
+          <div style={{ fontSize: 28, fontWeight: 700, color: "var(--color-text-primary)" }}>
             {formatCurrency(totalTarget)}
           </div>
         </div>
         <div className="glass-card stat-card" style={{ padding: 20 }}>
-          <div style={{ fontSize: 13, color: "#a1a1aa", marginBottom: 6 }}>
+          <div style={{ fontSize: 13, color: "var(--color-text-secondary)", marginBottom: 6 }}>
             Total Saved
           </div>
           <div style={{ fontSize: 28, fontWeight: 700, color: "#10b981" }}>
@@ -226,13 +226,13 @@ export default function GoalsView({ initialGoals }: { initialGoals: Goal[] }) {
                       borderRadius: 14,
                       background: isComplete
                         ? "linear-gradient(135deg, #10b981, #34d399)"
-                        : "rgba(39, 39, 42, 0.8)",
+                        : "var(--color-bg-hover-strong)",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
                       fontSize: 22,
                       border: `1px solid ${
-                        isComplete ? "rgba(16, 185, 129, 0.5)" : "#3f3f46"
+                        isComplete ? "rgba(16, 185, 129, 0.5)" : "var(--color-border-medium)"
                       }`,
                     }}
                   >
@@ -243,7 +243,7 @@ export default function GoalsView({ initialGoals }: { initialGoals: Goal[] }) {
                       style={{
                         fontSize: 16,
                         fontWeight: 600,
-                        color: "#fafafa",
+                        color: "var(--color-text-primary)",
                         marginBottom: 2,
                       }}
                     >
@@ -255,7 +255,7 @@ export default function GoalsView({ initialGoals }: { initialGoals: Goal[] }) {
                         alignItems: "center",
                         gap: 4,
                         fontSize: 12,
-                        color: "#71717a",
+                        color: "var(--color-text-muted)",
                       }}
                     >
                       <Calendar size={12} />
@@ -298,11 +298,11 @@ export default function GoalsView({ initialGoals }: { initialGoals: Goal[] }) {
                 }}
               >
                 <span
-                  style={{ fontSize: 22, fontWeight: 700, color: "#fafafa" }}
+                  style={{ fontSize: 22, fontWeight: 700, color: "var(--color-text-primary)" }}
                 >
                   {formatCurrency(goal.currentAmount)}
                 </span>
-                <span style={{ fontSize: 14, color: "#71717a" }}>
+                <span style={{ fontSize: 14, color: "var(--color-text-muted)" }}>
                   of {formatCurrency(goal.targetAmount)}
                 </span>
               </div>
@@ -327,7 +327,7 @@ export default function GoalsView({ initialGoals }: { initialGoals: Goal[] }) {
                   style={{
                     fontSize: 13,
                     fontWeight: 600,
-                    color: isComplete ? "#10b981" : "#a1a1aa",
+                    color: isComplete ? "#10b981" : "var(--color-text-secondary)",
                   }}
                 >
                   {isComplete
@@ -335,7 +335,7 @@ export default function GoalsView({ initialGoals }: { initialGoals: Goal[] }) {
                     : `${progress.toFixed(1)}% complete`}
                 </span>
                 {!isComplete && (
-                  <span style={{ fontSize: 12, color: "#71717a" }}>
+                  <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
                     {formatCurrency(remaining)} to go
                   </span>
                 )}
@@ -417,7 +417,7 @@ export default function GoalsView({ initialGoals }: { initialGoals: Goal[] }) {
             >
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 <Target size={18} color="#10b981" />
-                <h3 id="new-goal-title" style={{ fontSize: 18, fontWeight: 600, color: "#fafafa" }}>
+                <h3 id="new-goal-title" style={{ fontSize: 18, fontWeight: 600, color: "var(--color-text-primary)" }}>
                   New Savings Goal
                 </h3>
               </div>
@@ -431,7 +431,7 @@ export default function GoalsView({ initialGoals }: { initialGoals: Goal[] }) {
                   padding: 4,
                 }}
               >
-                <X size={18} color="#71717a" />
+                <X size={18} color="var(--color-text-muted)" />
               </button>
             </div>
 
@@ -441,7 +441,7 @@ export default function GoalsView({ initialGoals }: { initialGoals: Goal[] }) {
                 htmlFor="goal-name"
                 style={{
                   fontSize: 13,
-                  color: "#a1a1aa",
+                  color: "var(--color-text-secondary)",
                   display: "block",
                   marginBottom: 8,
                 }}
@@ -459,7 +459,7 @@ export default function GoalsView({ initialGoals }: { initialGoals: Goal[] }) {
                       height: 42,
                       borderRadius: 10,
                       border: `2px solid ${
-                        newGoal.emoji === emoji ? "#10b981" : "#3f3f46"
+                        newGoal.emoji === emoji ? "#10b981" : "var(--color-border-medium)"
                       }`,
                       background:
                         newGoal.emoji === emoji
@@ -485,7 +485,7 @@ export default function GoalsView({ initialGoals }: { initialGoals: Goal[] }) {
                 htmlFor="goal-target"
                 style={{
                   fontSize: 13,
-                  color: "#a1a1aa",
+                  color: "var(--color-text-secondary)",
                   display: "block",
                   marginBottom: 8,
                 }}
@@ -510,12 +510,12 @@ export default function GoalsView({ initialGoals }: { initialGoals: Goal[] }) {
                 htmlFor="goal-deadline"
                 style={{
                   fontSize: 13,
-                  color: "#a1a1aa",
+                  color: "var(--color-text-secondary)",
                   display: "block",
                   marginBottom: 8,
                 }}
               >
-                Target Amount ($)
+                Target Amount (RM)
               </label>
               <input
                 id="goal-target"
@@ -534,7 +534,7 @@ export default function GoalsView({ initialGoals }: { initialGoals: Goal[] }) {
               <label
                 style={{
                   fontSize: 13,
-                  color: "#a1a1aa",
+                  color: "var(--color-text-secondary)",
                   display: "block",
                   marginBottom: 8,
                 }}

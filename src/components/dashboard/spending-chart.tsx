@@ -15,14 +15,14 @@ function CustomTooltip({ active, payload, label }: any) {
   return (
     <div
       style={{
-        background: "#18181b",
-        border: "1px solid #3f3f46",
+        background: "var(--color-bg-card)",
+        border: "1px solid var(--color-border-medium)",
         borderRadius: 10,
         padding: "12px 16px",
         boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
       }}
     >
-      <div style={{ fontSize: 12, color: "#a1a1aa", marginBottom: 8 }}>
+      <div style={{ fontSize: 12, color: "var(--color-text-secondary)", marginBottom: 8 }}>
         {label}
       </div>
       {payload.map((p: any, idx: number) => (
@@ -46,7 +46,7 @@ function CustomTooltip({ active, payload, label }: any) {
               background: p.color,
             }}
           />
-          {p.name}: ${p.value.toLocaleString()}
+          {p.name}: RM{p.value.toLocaleString()}
         </div>
       ))}
     </div>
@@ -68,13 +68,13 @@ export default function SpendingChart({ data }: { data: ChartData[] }) {
           style={{
             fontSize: 16,
             fontWeight: 600,
-            color: "#fafafa",
+            color: "var(--color-text-primary)",
             marginBottom: 4,
           }}
         >
           Income vs Spending
         </h3>
-        <p style={{ fontSize: 13, color: "#71717a" }}>
+        <p style={{ fontSize: 13, color: "var(--color-text-muted)" }}>
           Last 6 months overview
         </p>
       </div>
@@ -92,18 +92,18 @@ export default function SpendingChart({ data }: { data: ChartData[] }) {
                 <stop offset="100%" stopColor="#f97316" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
             <XAxis
               dataKey="month"
               axisLine={false}
               tickLine={false}
-              tick={{ fill: "#71717a", fontSize: 12 }}
+              tick={{ fill: "var(--color-text-muted)", fontSize: 12 }}
             />
             <YAxis
               axisLine={false}
               tickLine={false}
-              tick={{ fill: "#71717a", fontSize: 12 }}
-              tickFormatter={(v) => `$${(v / 1000).toFixed(1)}k`}
+              tick={{ fill: "var(--color-text-muted)", fontSize: 12 }}
+              tickFormatter={(v) => `RM${(v / 1000).toFixed(1)}k`}
             />
             <Tooltip content={<CustomTooltip />} />
             <Area
@@ -145,7 +145,7 @@ export default function SpendingChart({ data }: { data: ChartData[] }) {
               background: "#10b981",
             }}
           />
-          <span style={{ fontSize: 12, color: "#a1a1aa" }}>Income</span>
+          <span style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>Income</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <div
@@ -156,7 +156,7 @@ export default function SpendingChart({ data }: { data: ChartData[] }) {
               background: "#f97316",
             }}
           />
-          <span style={{ fontSize: 12, color: "#a1a1aa" }}>Spending</span>
+          <span style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>Spending</span>
         </div>
       </div>
     </div>

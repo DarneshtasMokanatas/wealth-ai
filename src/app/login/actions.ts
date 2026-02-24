@@ -68,9 +68,25 @@ export async function signup(formData: FormData) {
   const supabase = await createClient()
   const mode = (formData.get('mode') as string) || 'signup'
 
+  const displayName = (formData.get('display_name') as string | null)?.trim() ?? ''
+  const phoneNumber = (formData.get('phone_number') as string | null)?.trim() ?? ''
+
+  if (!displayName) {
+    return redirect(buildAuthRedirect({ mode, error: 'Display name is required.' }))
+  }
+  if (!phoneNumber) {
+    return redirect(buildAuthRedirect({ mode, error: 'Phone number is required.' }))
+  }
+
   const data = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
+    options: {
+      data: {
+        display_name: displayName,
+        phone_number: phoneNumber,
+      },
+    },
   }
 
   const passwordError = validatePassword(data.password)
@@ -78,18 +94,26 @@ export async function signup(formData: FormData) {
     return redirect(buildAuthRedirect({ mode, error: passwordError }))
   }
 
-  const { data: { session }, error } = await supabase.auth.signUp(data)
+  const { data: { user, session }, error } = await supabase.auth.signUp(data)
 
   if (error) {
     return redirect(buildAuthRedirect({ mode, error: 'Could not authenticate user' }))
   }
-  
-  if (!session) {
-    return redirect(buildAuthRedirect({ mode: 'login', success: 'Check your email to verify your account.' }))
+
+  // Email confirmation is disabled — session is returned immediately
+  if (session && user) {
+    await supabase.from('profiles').upsert({
+      id: user.id,
+      display_name: displayName,
+      phone_number: phoneNumber,
+    })
+
+    revalidatePath('/', 'layout')
+    redirect('/')
   }
 
-  revalidatePath('/', 'layout')
-  redirect('/')
+  // Email confirmation is enabled — profile will be written in the auth callback
+  return redirect(buildAuthRedirect({ mode: 'login', success: 'Check your email to verify your account.' }))
 }
 
 export async function forgotPassword(formData: FormData) {

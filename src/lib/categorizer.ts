@@ -1,17 +1,17 @@
 import { Category, CategoryType } from "./types";
 
 export const CATEGORIES: Record<CategoryType, Category> = {
-  food: { id: "food", name: "Food & Dining", icon: "🍔", color: "#f97316" },
-  transport: { id: "transport", name: "Transport", icon: "🚗", color: "#3b82f6" },
-  shopping: { id: "shopping", name: "Shopping", icon: "🛍️", color: "#a855f7" },
-  entertainment: { id: "entertainment", name: "Entertainment", icon: "🎬", color: "#ec4899" },
-  bills: { id: "bills", name: "Bills & Utilities", icon: "💡", color: "#eab308" },
-  health: { id: "health", name: "Health", icon: "💊", color: "#14b8a6" },
-  travel: { id: "travel", name: "Travel", icon: "✈️", color: "#06b6d4" },
-  education: { id: "education", name: "Education", icon: "📚", color: "#8b5cf6" },
-  income: { id: "income", name: "Income", icon: "💰", color: "#22c55e" },
-  savings: { id: "savings", name: "Savings", icon: "🏦", color: "#10b981" },
-  other: { id: "other", name: "Other", icon: "📦", color: "#6b7280" },
+  food:          { id: "food",          name: "Food & Dining",     icon: "🍔",  color: "#f97316", type: "expense", user_id: null, is_system: true },
+  transport:     { id: "transport",     name: "Transport",         icon: "🚗",  color: "#3b82f6", type: "expense", user_id: null, is_system: true },
+  shopping:      { id: "shopping",      name: "Shopping",          icon: "🛍️", color: "#a855f7", type: "expense", user_id: null, is_system: true },
+  entertainment: { id: "entertainment", name: "Entertainment",     icon: "🎬",  color: "#ec4899", type: "expense", user_id: null, is_system: true },
+  bills:         { id: "bills",         name: "Bills & Utilities", icon: "💡",  color: "#eab308", type: "expense", user_id: null, is_system: true },
+  health:        { id: "health",        name: "Health",            icon: "💊",  color: "#14b8a6", type: "expense", user_id: null, is_system: true },
+  travel:        { id: "travel",        name: "Travel",            icon: "✈️",  color: "#06b6d4", type: "expense", user_id: null, is_system: true },
+  education:     { id: "education",     name: "Education",         icon: "📚",  color: "#8b5cf6", type: "expense", user_id: null, is_system: true },
+  income:        { id: "income",        name: "Income",            icon: "💰",  color: "#22c55e", type: "income",  user_id: null, is_system: true },
+  savings:       { id: "savings",       name: "Savings",           icon: "🏦",  color: "#10b981", type: "savings", user_id: null, is_system: true },
+  other:         { id: "other",         name: "Other",             icon: "📦",  color: "#6b7280", type: "expense", user_id: null, is_system: true },
 };
 
 // keyword-based auto-categorization engine

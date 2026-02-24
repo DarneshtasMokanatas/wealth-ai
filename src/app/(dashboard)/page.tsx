@@ -3,7 +3,9 @@ import {
   getCategoryBreakdown,
   getMonthlyHistory,
   getTransactions,
+  getCategories,
 } from "@/lib/data";
+import { createClient } from "@/lib/supabase/server";
 import StatCard from "@/components/dashboard/stat-card";
 import SpendingChart from "@/components/dashboard/spending-chart";
 import CategoryChart from "@/components/dashboard/category-chart";
@@ -12,10 +14,31 @@ import RecentTransactions from "@/components/dashboard/recent-transactions";
 // component functions from server to client.
 
 export default async function DashboardPage() {
-  const stats = await getDashboardStats();
-  const categoryData = await getCategoryBreakdown();
-  const history = await getMonthlyHistory();
-  const recentTransactions = (await getTransactions()).slice(0, 6);
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  let displayName = "";
+  if (user) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("display_name")
+      .eq("id", user.id)
+      .single();
+    const meta = user.user_metadata ?? {};
+    displayName =
+      profile?.display_name ||
+      (typeof meta.display_name === "string" ? meta.display_name : "") ||
+      user.email?.split("@")[0] ||
+      "";
+  }
+
+  const [stats, categoryData, history, recentTransactions, categories] = await Promise.all([
+    getDashboardStats(),
+    getCategoryBreakdown(),
+    getMonthlyHistory(),
+    getTransactions().then((txs) => txs.slice(0, 6)),
+    getCategories(),
+  ]);
   
   const monthlyData = history.map(h => ({
     month: h.month,
@@ -31,15 +54,15 @@ export default async function DashboardPage() {
           style={{
             fontSize: 24,
             fontWeight: 700,
-            color: "#fafafa",
+            color: "var(--color-text-primary)",
             marginBottom: 4,
             letterSpacing: "-0.02em",
           }}
         >
           Dashboard
         </h2>
-        <p style={{ fontSize: 14, color: "#71717a" }}>
-          Welcome back! Here&apos;s your financial overview.
+        <p style={{ fontSize: 14, color: "var(--color-text-muted)" }}>
+          Welcome back{displayName ? `, ${displayName}` : ""}! Here&apos;s your financial overview.
         </p>
       </div>
 
@@ -97,7 +120,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Recent Transactions */}
-      <RecentTransactions transactions={recentTransactions} />
+      <RecentTransactions transactions={recentTransactions} categories={categories} />
     </div>
   );
 }

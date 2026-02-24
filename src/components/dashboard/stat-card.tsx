@@ -87,10 +87,10 @@ export default function StatCard({
         )}
       </div>
 
-      <div style={{ fontSize: 13, color: "#a1a1aa", fontWeight: 500, marginBottom: 6 }}>
+      <div style={{ fontSize: 13, color: "var(--color-text-secondary)", fontWeight: 500, marginBottom: 6 }}>
         {label}
       </div>
-      <div style={{ fontSize: 28, fontWeight: 700, color: "#fafafa", letterSpacing: "-0.02em" }}>
+      <div style={{ fontSize: 28, fontWeight: 700, color: "var(--color-text-primary)", letterSpacing: "-0.02em" }}>
         {prefix}
         {typeof value === "number" ? formatCurrency(value) : value}
         {suffix}

@@ -16,7 +16,7 @@ export default function DashboardError({
   return (
     <div style={{ padding: 20 }}>
       <h2 style={{ marginBottom: 8, fontSize: 20, fontWeight: 700 }}>Unable to load dashboard</h2>
-      <p style={{ color: '#a1a1aa', marginBottom: 16 }}>
+      <p style={{ color: 'var(--color-text-secondary)', marginBottom: 16 }}>
         Something went wrong while loading your financial data.
       </p>
       <button className="btn" onClick={reset}>

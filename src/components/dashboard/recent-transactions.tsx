@@ -1,15 +1,18 @@
 "use client";
 
-import { Transaction } from "@/lib/types";
-import { CATEGORIES } from "@/lib/categorizer";
+import { useMemo } from "react";
+import { Transaction, Category } from "@/lib/types";
 import { formatCurrency, getRelativeTime } from "@/lib/utils";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 
 export default function RecentTransactions({
   transactions,
+  categories,
 }: {
   transactions: Transaction[];
+  categories: Category[];
 }) {
+  const catMap = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
 
   return (
     <div className="glass-card" style={{ padding: 24 }}>
@@ -23,11 +26,11 @@ export default function RecentTransactions({
       >
         <div>
           <h3
-            style={{ fontSize: 16, fontWeight: 600, color: "#fafafa", marginBottom: 4 }}
+            style={{ fontSize: 16, fontWeight: 600, color: "var(--color-text-primary)", marginBottom: 4 }}
           >
             Recent Transactions
           </h3>
-          <p style={{ fontSize: 13, color: "#71717a" }}>
+          <p style={{ fontSize: 13, color: "var(--color-text-muted)" }}>
             Your latest activity
           </p>
         </div>
@@ -46,7 +49,7 @@ export default function RecentTransactions({
 
       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
         {transactions.map((tx) => {
-          const cat = CATEGORIES[tx.category];
+          const cat = catMap.get(tx.category);
           const isIncome = tx.type === "income";
 
           return (
@@ -63,7 +66,7 @@ export default function RecentTransactions({
               }}
               onMouseEnter={(e) => {
                 (e.currentTarget as HTMLDivElement).style.background =
-                  "rgba(39, 39, 42, 0.4)";
+                  "var(--color-bg-hover)";
               }}
               onMouseLeave={(e) => {
                 (e.currentTarget as HTMLDivElement).style.background = "transparent";
@@ -89,7 +92,7 @@ export default function RecentTransactions({
                     style={{
                       fontSize: 14,
                       fontWeight: 500,
-                      color: "#fafafa",
+                      color: "var(--color-text-primary)",
                       marginBottom: 2,
                     }}
                   >
@@ -98,12 +101,12 @@ export default function RecentTransactions({
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <span
                       className="category-badge"
-                      style={{ color: cat?.color || "#a1a1aa" }}
+                      style={{ color: cat?.color || "var(--color-text-secondary)" }}
                     >
                       {cat?.name || tx.category}
                     </span>
-                    <span style={{ fontSize: 12, color: "#52525b" }}>•</span>
-                    <span style={{ fontSize: 12, color: "#71717a" }}>
+                    <span style={{ fontSize: 12, color: "var(--color-text-dim)" }}>•</span>
+                    <span style={{ fontSize: 12, color: "var(--color-text-muted)" }}>
                       {getRelativeTime(tx.date)}
                     </span>
                   </div>
@@ -120,7 +123,7 @@ export default function RecentTransactions({
                   style={{
                     fontSize: 15,
                     fontWeight: 600,
-                    color: isIncome ? "#10b981" : "#fafafa",
+                    color: isIncome ? "#10b981" : "var(--color-text-primary)",
                   }}
                 >
                   {isIncome ? "+" : "-"}
