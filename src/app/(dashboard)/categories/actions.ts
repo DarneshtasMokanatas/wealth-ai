@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getCategories } from '@/lib/data'
-import { toBoundedString, isValidUuid } from '@/lib/validation'
+import { toBoundedString, isValidUuid, safeErrorMessage } from '@/lib/validation'
 import type { Category } from '@/lib/types'
 
 export { getCategories as getUserCategories }
@@ -41,7 +41,7 @@ export async function addCategory(data: {
 
   if (error) {
     if (error.code === '23505') return { error: `You already have a category named "${name}"` }
-    return { error: error.message }
+    return { error: safeErrorMessage(error, 'Failed to create category.') }
   }
 
   revalidatePath('/categories')
@@ -116,7 +116,7 @@ export async function updateCategory(
 
   if (error) {
     if (error.code === '23505') return { error: `You already have a category with that name` }
-    return { error: error.message }
+    return { error: safeErrorMessage(error, 'Failed to update category.') }
   }
 
   revalidatePath('/categories')
@@ -172,7 +172,7 @@ export async function deleteCategory(id: string): Promise<{ success: true } | { 
     .eq('id', id)
     .eq('user_id', user.id)
 
-  if (error) return { error: error.message }
+  if (error) return { error: safeErrorMessage(error, 'Failed to delete category.') }
 
   revalidatePath('/categories')
   revalidatePath('/transactions')

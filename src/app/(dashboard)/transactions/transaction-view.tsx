@@ -55,12 +55,15 @@ export default function TransactionsView({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  const filteredTransactions = initialTransactions.filter((tx) => {
-    if (filterCategory !== "all" && tx.category !== filterCategory) return false;
-    if (filterType !== "all" && tx.type !== filterType) return false;
-    if (filterRecurring && !tx.isRecurring) return false;
-    return true;
-  });
+  const filteredTransactions = useMemo(
+    () => initialTransactions.filter((tx) => {
+      if (filterCategory !== "all" && tx.category !== filterCategory) return false;
+      if (filterType !== "all" && tx.type !== filterType) return false;
+      if (filterRecurring && !tx.isRecurring) return false;
+      return true;
+    }),
+    [initialTransactions, filterCategory, filterType, filterRecurring]
+  );
 
   function openEdit(tx: Transaction) {
     setEditTx(tx);

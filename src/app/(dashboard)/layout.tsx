@@ -1,25 +1,50 @@
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import { getBudgetStatuses, buildBudgetNotifications, getCategories } from "@/lib/data";
+import { createClient } from "@/lib/supabase/server";
+import { sanitiseAvatarUrl } from "@/lib/validation";
 
 export default async function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [budgetStatuses, categories] = await Promise.all([
+  const supabase = await createClient();
+  const [{ data: { user } }, budgetStatuses, categories] = await Promise.all([
+    supabase.auth.getUser(),
     getBudgetStatuses(),
     getCategories(),
   ]);
+
+  // Fetch profile once — shared by Header + Sidebar
+  let profile = { displayName: "", email: "", avatarUrl: null as string | null };
+  if (user) {
+    const { data: p } = await supabase
+      .from("profiles")
+      .select("display_name, avatar_url")
+      .eq("id", user.id)
+      .single();
+    const meta = user.user_metadata ?? {};
+    profile = {
+      displayName:
+        p?.display_name ||
+        (typeof meta.display_name === "string" ? meta.display_name : "") ||
+        user.email?.split("@")[0] ||
+        "User",
+      email: user.email ?? "",
+      avatarUrl: sanitiseAvatarUrl(p?.avatar_url),
+    };
+  }
+
   const notifications = buildBudgetNotifications(budgetStatuses, categories);
 
   const alertStatuses = budgetStatuses.filter((s) => s.isWarning);
 
   return (
     <div className="app-shell">
-      <Sidebar />
+      <Sidebar profile={profile} />
       <div className="app-main">
-        <Header initialNotifications={notifications} />
+        <Header initialNotifications={notifications} profile={profile} />
         <main className="app-content">
           {/* Budget alert banner — shown on every dashboard page when a limit is hit */}
           {alertStatuses.length > 0 && (

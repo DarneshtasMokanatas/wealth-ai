@@ -7,6 +7,8 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { env } from '@/lib/env'
 import { validatePassword } from '@/lib/validation'
+import { checkRateLimit, LOGIN_LIMIT, FORGOT_PASSWORD_LIMIT } from '@/lib/rate-limit'
+import { logSecurityEvent } from '@/lib/security-logger'
 
 const buildAuthRedirect = (params: Record<string, string>) => {
   const searchParams = new URLSearchParams(params)
@@ -44,6 +46,15 @@ export async function login(formData: FormData) {
   const supabase = await createClient()
   const mode = (formData.get('mode') as string) || 'login'
 
+  // Rate limit by IP (from x-forwarded-for) to prevent brute-force attacks
+  const headerStore = await headers()
+  const ip = headerStore.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const rl = checkRateLimit(LOGIN_LIMIT, ip)
+  if (!rl.allowed) {
+    logSecurityEvent({ event: 'rate_limit:exceeded', ip, meta: { limiter: 'login' } })
+    return redirect(buildAuthRedirect({ mode, error: 'Too many login attempts. Please wait a minute.' }))
+  }
+
   const data = {
     email: formData.get('email') as string,
     password: formData.get('password') as string,
@@ -57,9 +68,11 @@ export async function login(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(data)
 
   if (error) {
+    logSecurityEvent({ event: 'auth:login_failure', ip })
     return redirect(buildAuthRedirect({ mode, error: 'Invalid login credentials' }))
   }
 
+  logSecurityEvent({ event: 'auth:login_success', ip })
   revalidatePath('/', 'layout')
   redirect('/')
 }
@@ -117,6 +130,14 @@ export async function signup(formData: FormData) {
 }
 
 export async function forgotPassword(formData: FormData) {
+  // Rate limit forgot-password by IP to prevent email flooding
+  const headerStore2 = await headers()
+  const ip2 = headerStore2.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown'
+  const rl2 = checkRateLimit(FORGOT_PASSWORD_LIMIT, ip2)
+  if (!rl2.allowed) {
+    redirect(buildAuthRedirect({ mode: 'forgot', error: 'Too many requests. Please wait a minute.' }))
+  }
+
   const supabase = await createClient()
   const email = String(formData.get('email') ?? '').trim()
 

@@ -26,8 +26,10 @@ export default function ProfileView({
   const [profileStatus, setProfileStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   // Password form state
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
@@ -57,11 +59,12 @@ export default function ProfileView({
     e.preventDefault();
     setPasswordLoading(true);
     setPasswordStatus(null);
-    const result = await updatePassword({ newPassword, confirmPassword });
+    const result = await updatePassword({ currentPassword, newPassword, confirmPassword });
     if (result?.error) {
       setPasswordStatus({ type: "error", message: result.error });
     } else {
       setPasswordStatus({ type: "success", message: "Password updated successfully." });
+      setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
     }
@@ -290,6 +293,30 @@ export default function ProfileView({
 
         <form onSubmit={handlePasswordSave} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
           <div>
+            <label htmlFor="currentPassword" style={labelStyle}>Current Password</label>
+            <div style={{ position: "relative" }}>
+              <input
+                id="currentPassword"
+                type={showCurrent ? "text" : "password"}
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Enter current password"
+                style={{ ...inputStyle, paddingRight: 44 }}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "#10b981")}
+                onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-border)")}
+              />
+              <button
+                type="button"
+                onClick={() => setShowCurrent((v) => !v)}
+                style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "transparent", border: "none", cursor: "pointer", color: "var(--color-text-muted)", padding: 0, display: "flex" }}
+                aria-label={showCurrent ? "Hide password" : "Show password"}
+              >
+                {showCurrent ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
+
+          <div>
             <label htmlFor="newPassword" style={labelStyle}>New Password</label>
             <div style={{ position: "relative" }}>
               <input
@@ -340,19 +367,19 @@ export default function ProfileView({
           <div style={{ display: "flex", justifyContent: "flex-end" }}>
             <button
               type="submit"
-              disabled={passwordLoading || !newPassword || !confirmPassword}
+              disabled={passwordLoading || !currentPassword || !newPassword || !confirmPassword}
               style={{
                 display: "flex",
                 alignItems: "center",
                 gap: 8,
                 padding: "10px 20px",
-                background: passwordLoading || !newPassword || !confirmPassword ? "var(--color-border)" : "#10b981",
+                background: passwordLoading || !currentPassword || !newPassword || !confirmPassword ? "var(--color-border)" : "#10b981",
                 border: "none",
                 borderRadius: 10,
-                color: passwordLoading || !newPassword || !confirmPassword ? "var(--color-text-muted)" : "#022c22",
+                color: passwordLoading || !currentPassword || !newPassword || !confirmPassword ? "var(--color-text-muted)" : "#022c22",
                 fontWeight: 700,
                 fontSize: 14,
-                cursor: passwordLoading || !newPassword || !confirmPassword ? "not-allowed" : "pointer",
+                cursor: passwordLoading || !currentPassword || !newPassword || !confirmPassword ? "not-allowed" : "pointer",
                 transition: "all 0.2s",
               }}
             >

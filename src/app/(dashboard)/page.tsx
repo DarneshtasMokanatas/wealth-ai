@@ -1,14 +1,8 @@
-import {
-  getDashboardStats,
-  getCategoryBreakdown,
-  getMonthlyHistory,
-  getTransactions,
-  getCategories,
-} from "@/lib/data";
+import { getDashboardData } from "@/lib/data";
 import { createClient } from "@/lib/supabase/server";
 import StatCard from "@/components/dashboard/stat-card";
-import SpendingChart from "@/components/dashboard/spending-chart";
-import CategoryChart from "@/components/dashboard/category-chart";
+import SpendingChart from "@/components/dashboard/spending-chart-lazy";
+import CategoryChart from "@/components/dashboard/category-chart-lazy";
 import RecentTransactions from "@/components/dashboard/recent-transactions";
 // Icons are rendered in the client `StatCard` by name to avoid passing
 // component functions from server to client.
@@ -32,14 +26,13 @@ export default async function DashboardPage() {
       "";
   }
 
-  const [stats, categoryData, history, recentTransactions, categories] = await Promise.all([
-    getDashboardStats(),
-    getCategoryBreakdown(),
-    getMonthlyHistory(),
-    getTransactions().then((txs) => txs.slice(0, 6)),
-    getCategories(),
-  ]);
-  
+  const dashData = await getDashboardData()
+  const stats = dashData?.stats ?? { balance: 0, totalIncome: 0, totalExpenses: 0, monthlyExpenses: 0, burnRate: 0, savingsRate: 0, monthlyIncome: 0 }
+  const categoryData = dashData?.categoryBreakdown ?? []
+  const history = dashData?.monthlyHistory ?? []
+  const recentTransactions = dashData?.recentTransactions ?? []
+  const categories = dashData?.categories ?? []
+
   const monthlyData = history.map(h => ({
     month: h.month,
     income: h.income,

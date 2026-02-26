@@ -27,8 +27,8 @@ DROP POLICY IF EXISTS "Authenticated users can view categories" ON categories;
 CREATE POLICY "Users can view categories"
   ON categories FOR SELECT
   USING (
-    auth.role() = 'authenticated'
-    AND (user_id IS NULL OR user_id = auth.uid())
+    (SELECT auth.role()) = 'authenticated'
+    AND (user_id IS NULL OR user_id = (SELECT auth.uid()))
   );
 
 -- INSERT: users can only insert rows where user_id = their own uid

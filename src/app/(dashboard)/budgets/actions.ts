@@ -2,19 +2,22 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { isValidUuid, toPositiveAmount } from '@/lib/validation'
+import { isValidUuid, toPositiveAmount, safeErrorMessage } from '@/lib/validation'
 
 export async function addBudget(category: string, amount: number) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
+  // Validate category UUID before querying
+  if (!isValidUuid(category)) return { error: 'Invalid category' }
+
   // Validate category exists, belongs to this user (or is system), and is not income-type
   const { data: catRow } = await supabase
     .from('categories')
     .select('id, type')
     .eq('id', category)
-    .or(`user_id.is.null,user_id.eq.${user.id}`)
+    .or('user_id.is.null,user_id.eq.' + user.id)
     .single()
   if (!catRow) return { error: 'Invalid category' }
   if (catRow.type === 'income') return { error: 'Income categories cannot have budgets' }
@@ -35,7 +38,7 @@ export async function addBudget(category: string, amount: number) {
     if (error.code === '23505') {
       return { error: 'A monthly budget for that category already exists. Edit or delete it first.' }
     }
-    return { error: error.message }
+    return { error: safeErrorMessage(error, 'Failed to create budget.') }
   }
 
   revalidatePath('/budgets')
@@ -63,7 +66,7 @@ export async function updateBudget(id: string, amount: number) {
     .eq('id', id)
     .eq('user_id', user.id)
 
-  if (error) return { error: error.message }
+  if (error) return { error: safeErrorMessage(error, 'Failed to update budget.') }
 
   revalidatePath('/budgets')
   revalidatePath('/')
@@ -85,7 +88,7 @@ export async function deleteBudget(id: string) {
     .eq('id', id)
     .eq('user_id', user.id)
 
-  if (error) return { error: error.message }
+  if (error) return { error: safeErrorMessage(error, 'Failed to delete budget.') }
 
   revalidatePath('/budgets')
   revalidatePath('/')

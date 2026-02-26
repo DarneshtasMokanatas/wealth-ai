@@ -3,6 +3,9 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { env } from '@/lib/env'
 
 export async function updateSession(request: NextRequest) {
+  // Generate a per-request CSP nonce for inline scripts
+  const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
+
   let supabaseResponse = NextResponse.next({
     request,
   })
@@ -23,6 +26,8 @@ export async function updateSession(request: NextRequest) {
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )
+          // Re-apply nonce header after response recreation
+          supabaseResponse.headers.set('x-nonce', nonce)
         },
       },
     }
@@ -56,6 +61,26 @@ export async function updateSession(request: NextRequest) {
     url.pathname = '/'
     return NextResponse.redirect(url)
   }
+
+  // Attach the nonce header so layout.tsx can read it, and apply nonce-based CSP
+  supabaseResponse.headers.set('x-nonce', nonce)
+
+  // Dynamic CSP with per-request nonce — replaces the static 'unsafe-inline'
+  const supabaseHost = env.supabaseUrl ? new URL(env.supabaseUrl).host : '*.supabase.co'
+  const csp = [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}'`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    `connect-src 'self' https://${supabaseHost} wss://${supabaseHost}`,
+    "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://www.gravatar.com",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "upgrade-insecure-requests",
+  ].join('; ')
+  supabaseResponse.headers.set('Content-Security-Policy', csp)
 
   return supabaseResponse
 }

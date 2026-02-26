@@ -47,7 +47,7 @@ function LoginForm() {
   const queryMessage = searchParams.get('message')
   const querySuccess = searchParams.get('success')
 
-  const title = mode === 'login' ? 'Log into FinanceAI' : mode === 'signup' ? 'Create your account' : 'Forgot password'
+  const title = mode === 'login' ? 'Log into Wealth AI' : mode === 'signup' ? 'Create your account' : 'Forgot password'
   const submitLabel = mode === 'login' ? 'Log in' : mode === 'signup' ? 'Create new account' : 'Send reset link'
 
   const switchMode = (nextMode: AuthMode) => {

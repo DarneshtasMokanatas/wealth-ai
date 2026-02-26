@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import ProfileView from './profile-view'
 
-export const metadata = { title: 'Profile — FinanceAI' }
+export const metadata = { title: 'Profile — Wealth AI' }
 
 export default async function ProfilePage() {
   const supabase = await createClient()

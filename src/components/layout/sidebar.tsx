@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -13,27 +14,38 @@ import {
   X,
   PieChart,
   Tag,
+  CalendarDays,
 } from "lucide-react";
 import { useSidebar } from "./sidebar-context";
 import { createClient } from "@/lib/supabase/client";
+import { sanitiseAvatarUrl } from "@/lib/validation";
+
+interface SidebarProfile {
+  displayName: string;
+  email: string;
+  avatarUrl: string | null;
+}
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/transactions", label: "Transactions", icon: Receipt },
+  { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/goals", label: "Goals", icon: Target },
   { href: "/budgets", label: "Budgets", icon: PieChart },
   { href: "/analytics", label: "Analytics", icon: TrendingUp },
   { href: "/categories", label: "Categories", icon: Tag },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ profile }: { profile?: SidebarProfile }) {
   const pathname = usePathname();
   const { isOpen, close } = useSidebar();
   const supabase = useMemo(() => createClient(), []);
-  const [profileName, setProfileName] = useState("");
-  const [profileAvatar, setProfileAvatar] = useState<string | null>(null);
+  const [profileName, setProfileName] = useState(profile?.displayName ?? "");
+  const [profileAvatar, setProfileAvatar] = useState<string | null>(profile?.avatarUrl ?? null);
 
+  // Only fetch profile client-side if not provided from server
   useEffect(() => {
+    if (profile) return;
     async function loadProfile() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -49,10 +61,10 @@ export default function Sidebar() {
         user.email?.split("@")[0] ||
         "User"
       );
-      setProfileAvatar(profile?.avatar_url || null);
+      setProfileAvatar(sanitiseAvatarUrl(profile?.avatar_url));
     }
     loadProfile();
-  }, [supabase]);
+  }, [supabase, profile]);
 
   return (
     <>
@@ -93,7 +105,7 @@ export default function Sidebar() {
                   letterSpacing: "-0.02em",
                 }}
               >
-                FinanceAI
+                Wealth AI
               </h1>
               <span
                 style={{
@@ -123,6 +135,7 @@ export default function Sidebar() {
               fontWeight: 600,
               color: "var(--color-text-dim)",
               padding: "0 16px 8px",
+              marginTop: 16,
               textTransform: "uppercase",
               letterSpacing: "0.08em",
             }}
@@ -189,8 +202,7 @@ export default function Sidebar() {
                 }}
               >
                 {profileAvatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={profileAvatar} alt={profileName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <Image src={profileAvatar} alt={profileName} width={32} height={32} style={{ objectFit: "cover" }} />
                 ) : profileName ? (
                   profileName.charAt(0).toUpperCase()
                 ) : (

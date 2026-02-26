@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useMemo, useState, useTransition } from 'react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell, Legend
@@ -93,7 +93,10 @@ export default function AnalyticsView({ initialTrend, dayOfWeek, categoryMoM }: 
   }
 
   // Peak day for highlighting
-  const peakDay = [...dayOfWeek].sort((a, b) => b.average - a.average)[0]?.day
+  const peakDay = useMemo(
+    () => [...dayOfWeek].sort((a, b) => b.average - a.average)[0]?.day,
+    [dayOfWeek]
+  )
 
   const sectionTitle: React.CSSProperties = {
     fontSize: 17, fontWeight: 700, color: 'var(--color-text-primary)',
@@ -192,7 +195,7 @@ export default function AnalyticsView({ initialTrend, dayOfWeek, categoryMoM }: 
               placeholder="e.g. Which category am I overspending on?"
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleAsk() }}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !answerLoading) handleAsk() }}
               style={{
                 flex: 1, padding: '10px 12px', borderRadius: 10,
                 border: '1px solid var(--color-border)', background: 'var(--color-bg-card)',

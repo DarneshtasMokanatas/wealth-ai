@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { isValidIsoDate, isValidUuid, toBoundedString, toPositiveAmount } from '@/lib/validation'
+import { isValidIsoDate, isValidUuid, toBoundedString, toPositiveAmount, safeErrorMessage } from '@/lib/validation'
 import type { RecurrenceType } from '@/lib/types'
 
 const allowedTransactionTypes = new Set(['expense', 'income'])
@@ -46,11 +46,14 @@ export async function addTransaction(data: {
   }
 
   // Validate category exists and belongs to this user (or is a system category)
+  if (!isValidUuid(data.category)) {
+    return { error: 'Invalid transaction category' }
+  }
   const { data: catRow } = await supabase
     .from('categories')
     .select('id')
     .eq('id', data.category)
-    .or(`user_id.is.null,user_id.eq.${user.id}`)
+    .or('user_id.is.null,user_id.eq.' + user.id)
     .single()
   if (!catRow) {
     return { error: 'Invalid transaction category' }
@@ -84,7 +87,7 @@ export async function addTransaction(data: {
     next_due_date: nextDueDate,
   })
 
-  if (error) return { error: error.message }
+  if (error) return { error: safeErrorMessage(error, 'Failed to add transaction.') }
 
   revalidatePath('/transactions')
   revalidatePath('/')
@@ -111,11 +114,12 @@ export async function updateTransaction(id: string, data: {
   if (!amount) return { error: 'Amount must be greater than zero' }
 
   // Validate category exists and belongs to this user (or is a system category)
+  if (!isValidUuid(data.category)) return { error: 'Invalid category' }
   const { data: catRow } = await supabase
     .from('categories')
     .select('id')
     .eq('id', data.category)
-    .or(`user_id.is.null,user_id.eq.${user.id}`)
+    .or('user_id.is.null,user_id.eq.' + user.id)
     .single()
   if (!catRow) return { error: 'Invalid category' }
 
@@ -145,7 +149,7 @@ export async function updateTransaction(id: string, data: {
     .eq('id', id)
     .eq('user_id', user.id)
 
-  if (error) return { error: error.message }
+  if (error) return { error: safeErrorMessage(error, 'Failed to update transaction.') }
 
   revalidatePath('/transactions')
   revalidatePath('/')
@@ -167,7 +171,7 @@ export async function deleteTransaction(id: string) {
     .eq('id', id)
     .eq('user_id', user.id)
 
-  if (error) return { error: error.message }
+  if (error) return { error: safeErrorMessage(error, 'Failed to delete transaction.') }
 
   revalidatePath('/transactions')
   revalidatePath('/')

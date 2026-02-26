@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { isValidIsoDate, isValidUuid, toBoundedString, toPositiveAmount } from '@/lib/validation'
+import { isValidIsoDate, isValidUuid, toBoundedString, toPositiveAmount, safeErrorMessage } from '@/lib/validation'
 
 export async function addGoal(data: {
   name: string
@@ -42,7 +42,7 @@ export async function addGoal(data: {
     user_id: user.id
   })
 
-  if (error) return { error: error.message }
+  if (error) return { error: safeErrorMessage(error, 'Failed to create goal.') }
   revalidatePath('/goals')
   return { success: true }
 }
@@ -66,7 +66,7 @@ export async function addContribution(goalId: string, amount: number) {
     p_amount: safeAmount,
   })
 
-  if (error) return { error: error.message }
+  if (error) return { error: safeErrorMessage(error, 'Failed to add contribution.') }
   
   revalidatePath('/goals')
   return { success: true }
@@ -86,7 +86,7 @@ export async function deleteGoal(id: string) {
     .delete()
     .eq('id', id)
     .eq('user_id', user.id)
-  if (error) return { error: error.message }
+  if (error) return { error: safeErrorMessage(error, 'Failed to delete goal.') }
   
   revalidatePath('/goals')
   return { success: true }

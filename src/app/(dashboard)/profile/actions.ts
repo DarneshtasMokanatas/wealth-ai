@@ -2,7 +2,8 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { toBoundedString, validatePassword } from '@/lib/validation'
+import { toBoundedString, validatePassword, safeErrorMessage } from '@/lib/validation'
+import { logSecurityEvent } from '@/lib/security-logger'
 
 export async function updateProfile(data: {
   displayName: string
@@ -24,7 +25,7 @@ export async function updateProfile(data: {
     .update({ display_name: displayName, phone_number: phoneNumber || null })
     .eq('id', user.id)
 
-  if (error) return { error: error.message }
+  if (error) return { error: safeErrorMessage(error, 'Failed to update profile.') }
 
   // Keep auth user_metadata in sync so all fallback sources agree
   await supabase.auth.updateUser({ data: { display_name: displayName } })
@@ -35,6 +36,7 @@ export async function updateProfile(data: {
 }
 
 export async function updatePassword(data: {
+  currentPassword: string
   newPassword: string
   confirmPassword: string
 }) {
@@ -45,12 +47,24 @@ export async function updatePassword(data: {
   const passwordError = validatePassword(data.newPassword)
   if (passwordError) return { error: passwordError }
 
+  if (!data.currentPassword) {
+    return { error: 'Current password is required' }
+  }
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const { error } = await supabase.auth.updateUser({ password: data.newPassword })
-  if (error) return { error: error.message }
+  // Re-authenticate: verify the current password before allowing a change
+  const { error: signInError } = await supabase.auth.signInWithPassword({
+    email: user.email!,
+    password: data.currentPassword,
+  })
+  if (signInError) return { error: 'Current password is incorrect' }
 
+  const { error } = await supabase.auth.updateUser({ password: data.newPassword })
+  if (error) return { error: 'Failed to update password. Please try again.' }
+
+  logSecurityEvent({ event: 'auth:password_change', userId: user.id })
   return { success: true }
 }

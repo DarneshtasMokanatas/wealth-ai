@@ -1,17 +1,19 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { Bell, Search, Menu, LogOut, Sun, Moon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSidebar } from "./sidebar-context";
 import { useTheme } from "./theme-context";
 import { createClient } from "@/lib/supabase/client";
+import { sanitiseAvatarUrl } from "@/lib/validation";
 
-type UserProfile = {
+export interface UserProfile {
   displayName: string;
   email: string;
   avatarUrl: string | null;
-};
+}
 
 export interface AppNotification {
   id: string;
@@ -23,8 +25,10 @@ export interface AppNotification {
 
 export default function Header({
   initialNotifications = [],
+  profile,
 }: {
   initialNotifications?: AppNotification[];
+  profile?: UserProfile;
 }) {
   const { toggle } = useSidebar();
   const { theme, toggleTheme } = useTheme();
@@ -32,7 +36,7 @@ export default function Header({
   const supabase = useMemo(() => createClient(), []);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
-  const [userProfile, setUserProfile] = useState<UserProfile>({ displayName: "", email: "", avatarUrl: null });
+  const [userProfile, setUserProfile] = useState<UserProfile>(profile ?? { displayName: "", email: "", avatarUrl: null });
   const [notifications, setNotifications] = useState<AppNotification[]>(initialNotifications);
 
   // Sync when server re-renders with fresh data (e.g. after adding a transaction)
@@ -43,7 +47,9 @@ export default function Header({
 
   const notificationsRef = useRef<HTMLDivElement | null>(null);
 
+  // Only fetch profile client-side if not provided from server
   useEffect(() => {
+    if (profile) return;  // Already have server-side profile
     async function loadProfile() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
@@ -62,11 +68,11 @@ export default function Header({
           user.email?.split("@")[0] ||
           "User",
         email: user.email ?? "",
-        avatarUrl: profile?.avatar_url || null,
+        avatarUrl: sanitiseAvatarUrl(profile?.avatar_url),
       });
     }
     loadProfile();
-  }, [supabase]);
+  }, [supabase, profile]);
 
   useEffect(() => {
     if (!isNotificationsOpen) return;
@@ -119,6 +125,32 @@ export default function Header({
 
       {/* Right side */}
       <div style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0, marginLeft: 16 }}>
+        {/* Theme toggle */}
+        <button
+          type="button"
+          onClick={toggleTheme}
+          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          style={{
+            width: 38,
+            height: 38,
+            borderRadius: 10,
+            background: "var(--color-bg-card)",
+            border: "1px solid var(--color-border)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            flexShrink: 0,
+            transition: "all 0.2s ease",
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#10b981"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--color-border)"; }}
+        >
+          {theme === "dark"
+            ? <Sun size={16} color="var(--color-text-secondary)" />
+            : <Moon size={16} color="var(--color-text-secondary)" />}
+        </button>
+
         {/* Notification Bell */}
         <div ref={notificationsRef} style={{ position: "relative", zIndex: 110 }}>
           <button
@@ -161,9 +193,9 @@ export default function Header({
               role="menu"
               aria-label="Notifications panel"
               style={{
-                position: "fixed",
-                top: 74,
-                right: 20,
+                position: "absolute",
+                top: "calc(100% + 8px)",
+                right: 0,
                 width: "min(320px, calc(100vw - 24px))",
                 background: "var(--color-bg-elevated)",
                 border: "1px solid var(--color-border)",
@@ -243,32 +275,6 @@ export default function Header({
           )}
         </div>
 
-        {/* Theme toggle */}
-        <button
-          type="button"
-          onClick={toggleTheme}
-          aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          style={{
-            width: 38,
-            height: 38,
-            borderRadius: 10,
-            background: "var(--color-bg-card)",
-            border: "1px solid var(--color-border)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            cursor: "pointer",
-            flexShrink: 0,
-            transition: "all 0.2s ease",
-          }}
-          onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#10b981"; }}
-          onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--color-border)"; }}
-        >
-          {theme === "dark"
-            ? <Sun size={16} color="var(--color-text-secondary)" />
-            : <Moon size={16} color="var(--color-text-secondary)" />}
-        </button>
-
         <button
           type="button"
           onClick={handleSignOut}
@@ -311,8 +317,7 @@ export default function Header({
             }}
           >
             {userProfile.avatarUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={userProfile.avatarUrl} alt={userProfile.displayName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              <Image src={userProfile.avatarUrl} alt={userProfile.displayName} width={36} height={36} style={{ objectFit: "cover" }} />
             ) : (
               userProfile.displayName.charAt(0).toUpperCase() || "?"
             )}

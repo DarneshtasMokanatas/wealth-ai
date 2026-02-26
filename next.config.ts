@@ -22,19 +22,17 @@ const securityHeaders = [
     key: 'Permissions-Policy',
     value: 'camera=(), microphone=(), geolocation=()',
   },
-  // Content Security Policy
-  // — script-src: only same-origin + Next.js inline scripts (nonce-based in prod is ideal)
-  // — connect-src: allow Supabase REST/Auth/Realtime endpoints only
-  // — frame-ancestors: explicit deny (belt-and-suspenders with X-Frame-Options)
+  // NOTE: CSP is now applied dynamically in middleware (with per-request nonce).
+  // If middleware is ever bypassed, this static CSP acts as a fallback.
   {
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline'",   // 'unsafe-inline' needed for Next.js hydration; migrate to nonces when ready
+      "script-src 'self'",                     // No 'unsafe-inline' — nonce is applied in middleware
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
       `connect-src 'self' https://${supabaseHost} wss://${supabaseHost}`,
-      "img-src 'self' data: blob:",
+      "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://www.gravatar.com",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",
@@ -45,6 +43,17 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
+  experimental: {
+    optimizePackageImports: ['recharts', 'lucide-react', 'date-fns'],
+  },
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: '*.supabase.co' },
+      { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      { protocol: 'https', hostname: 'avatars.githubusercontent.com' },
+      { protocol: 'https', hostname: 'www.gravatar.com' },
+    ],
+  },
   async headers() {
     return [
       {

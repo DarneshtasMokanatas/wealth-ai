@@ -1,9 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import { env } from '@/lib/env'
+import { timingSafeEqual } from 'crypto'
+import { checkRateLimit, CRON_LIMIT } from '@/lib/rate-limit'
+import { logSecurityEvent } from '@/lib/security-logger'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
+
+/**
+ * Constant-time string comparison to prevent timing attacks on secrets.
+ * Returns false if either value is empty or they differ in content.
+ */
+function safeCompare(a: string, b: string): boolean {
+  if (!a || !b) return false
+  const bufA = Buffer.from(a)
+  const bufB = Buffer.from(b)
+  if (bufA.length !== bufB.length) return false
+  return timingSafeEqual(bufA, bufB)
+}
 
 function addInterval(dateStr: string, recurrence: 'weekly' | 'monthly'): string {
   const d = new Date(`${dateStr}T00:00:00Z`)
@@ -15,13 +30,20 @@ function addInterval(dateStr: string, recurrence: 'weekly' | 'monthly'): string 
   return d.toISOString().slice(0, 10)
 }
 
-export async function GET(req: NextRequest) {
-  // ── Auth: validate cron secret ──────────────────────────────────────────
+export async function POST(req: NextRequest) {
+  // ── Auth: validate cron secret (timing-safe) ────────────────────────────
   const authHeader = req.headers.get('authorization') ?? ''
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : ''
 
-  if (!env.cronSecret || token !== env.cronSecret) {
+  if (!env.cronSecret || !safeCompare(token, env.cronSecret)) {
+    logSecurityEvent({ event: 'cron:unauthorized', meta: { path: '/api/cron/process-recurring' } })
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Rate limit cron invocations
+  const rl = checkRateLimit(CRON_LIMIT, 'global')
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Rate limited' }, { status: 429 })
   }
 
   const supabase = createServiceClient()

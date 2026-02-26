@@ -54,3 +54,50 @@ export function validatePassword(password: string): string | null {
   }
   return null
 }
+
+// ── Error Sanitisation ──────────────────────────────────────────────────────
+
+/**
+ * Returns a generic user-facing error message.
+ * Prevents leaking internal DB details (constraint names, error codes, etc.)
+ * while still logging the original for debugging.
+ */
+export function safeErrorMessage(error: { message?: string; code?: string } | null, fallback = 'An unexpected error occurred. Please try again.'): string {
+  if (!error) return fallback
+  // Log the real error server-side for debugging
+  console.error('[db-error]', error.code, error.message)
+  return fallback
+}
+
+// ── Avatar URL Validation ──────────────────────────────────────────────────
+
+/** Allow-listed protocol + host patterns for avatar URLs. */
+const AVATAR_ALLOWED_HOSTS = [
+  /^[a-z0-9-]+\.supabase\.co$/,          // Supabase storage
+  /^[a-z0-9-]+\.supabase\.in$/,
+  /^lh3\.googleusercontent\.com$/,        // Google profile pictures
+  /^avatars\.githubusercontent\.com$/,     // GitHub avatars
+  /^www\.gravatar\.com$/,
+  /^i\.pravatar\.cc$/,                     // dev/demo placeholder
+]
+
+/**
+ * Validates and sanitises an avatar URL.
+ * Returns the URL if safe, or null if it should be rejected.
+ */
+export function sanitiseAvatarUrl(raw: string | null | undefined): string | null {
+  if (!raw || typeof raw !== 'string') return null
+  const trimmed = raw.trim()
+  if (!trimmed) return null
+
+  try {
+    const url = new URL(trimmed)
+    // Only allow https (and http for localhost dev)
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null
+    // Block javascript:, data:, blob: etc.
+    if (!AVATAR_ALLOWED_HOSTS.some((re) => re.test(url.hostname))) return null
+    return url.href
+  } catch {
+    return null
+  }
+}
