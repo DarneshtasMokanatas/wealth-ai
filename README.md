@@ -1,4 +1,4 @@
-# FinanceAI 💰
+# WealthAI 💰
 
 A premium personal finance dashboard built with **Next.js 16**, **Supabase**, and **Tailwind CSS**. Track spending, manage budgets, set savings goals, and get AI-powered insights powered by Google Gemini.
 
@@ -45,8 +45,8 @@ A premium personal finance dashboard built with **Next.js 16**, **Supabase**, an
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/DarneshtasMokanatas/finance-ai.git
-cd finance-ai
+git clone https://github.com/DarneshtasMokanatas/wealth-ai.git
+cd wealth-ai
 ```
 
 ### 2. Install dependencies
