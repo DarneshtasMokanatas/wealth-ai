@@ -1,13 +1,29 @@
 /**
  * Lightweight in-memory sliding-window rate limiter.
  *
- * For production at scale, replace with an external store such as
- * @upstash/ratelimit + Vercel KV.  This module provides defence-in-depth
- * for single-instance or serverless-with-warm-instances deployments.
+ * ⚠️  SERVERLESS LIMITATION: This store is process-local. On Vercel or any
+ * multi-instance / cold-start deployment each new instance starts with an
+ * empty window, making it trivial for an attacker to bypass limits by
+ * distributing requests across instances.
  *
- * Security note: the limiter is keyed by a caller-provided identifier
- * (IP, user ID, etc.) — never by user-controlled strings that could be
- * spoofed to bypass limits.
+ * RECOMMENDED UPGRADE for production at scale:
+ *   1. npm install @upstash/ratelimit @upstash/redis
+ *   2. Set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN in your env.
+ *   3. Replace `checkRateLimit` calls with:
+ *
+ *      import { Ratelimit } from '@upstash/ratelimit'
+ *      import { Redis } from '@upstash/redis'
+ *      const redis = Redis.fromEnv()
+ *      const loginLimiter = new Ratelimit({
+ *        redis,
+ *        limiter: Ratelimit.slidingWindow(5, '60 s'),
+ *        prefix: 'rl:login',
+ *      })
+ *      const { success } = await loginLimiter.limit(ip)
+ *
+ * This module provides defence-in-depth for single-instance or
+ * serverless-with-warm-instances deployments and is a safe default until
+ * a distributed store is wired in.
  */
 
 interface SlidingWindow {
@@ -15,6 +31,20 @@ interface SlidingWindow {
 }
 
 const buckets = new Map<string, SlidingWindow>()
+
+// Warn once at module load if running on Vercel without a distributed store.
+// This surfaces the gap in server logs without affecting runtime behaviour.
+if (
+  process.env.VERCEL &&
+  !process.env.UPSTASH_REDIS_REST_URL &&
+  process.env.NODE_ENV === 'production'
+) {
+  console.warn(
+    '[rate-limit] WARNING: Running on Vercel without a distributed rate-limit store. ' +
+    'The in-memory limiter can be bypassed across cold-start instances. ' +
+    'Consider upgrading to @upstash/ratelimit — see src/lib/rate-limit.ts for instructions.'
+  )
+}
 
 /** Evict stale entries every 5 minutes to prevent memory growth. */
 const EVICTION_INTERVAL_MS = 5 * 60 * 1000

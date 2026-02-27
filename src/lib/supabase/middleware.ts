@@ -73,7 +73,7 @@ export async function updateSession(request: NextRequest) {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     `connect-src 'self' https://${supabaseHost} wss://${supabaseHost}`,
-    "img-src 'self' data: blob: https://*.supabase.co https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://www.gravatar.com",
+    "img-src 'self' blob: https://*.supabase.co https://lh3.googleusercontent.com https://avatars.githubusercontent.com https://www.gravatar.com",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",

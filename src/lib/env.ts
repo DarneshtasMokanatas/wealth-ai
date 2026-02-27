@@ -13,6 +13,15 @@ export const env = {
   supabaseAnonKey: requireEnv(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY, 'NEXT_PUBLIC_SUPABASE_ANON_KEY'),
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? '',
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? '',
-  cronSecret: process.env.CRON_SECRET ?? '',
+  // In production, CRON_SECRET must be set — crash at startup rather than silently
+  // accept unauthenticated cron requests. In local dev, a missing secret simply
+  // means the cron endpoint will reject all calls (which is fine).
+  cronSecret:
+    process.env.NODE_ENV === 'production'
+      ? requireEnv(process.env.CRON_SECRET, 'CRON_SECRET')
+      : (process.env.CRON_SECRET ?? ''),
   geminiApiKey: process.env.GEMINI_API_KEY ?? '',
+  // Optional: set to a Slack/Discord/PagerDuty webhook URL to receive real-time
+  // alerts for high-severity security events (auth failures, rate-limit exceeded, etc.)
+  securityWebhookUrl: process.env.SECURITY_WEBHOOK_URL ?? '',
 }

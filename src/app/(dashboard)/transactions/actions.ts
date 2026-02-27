@@ -49,11 +49,14 @@ export async function addTransaction(data: {
   if (!isValidUuid(data.category)) {
     return { error: 'Invalid transaction category' }
   }
+  // Defensive: user.id comes from supabase.auth.getUser() but validate UUID shape
+  // before interpolating into a filter string to prevent accidental injection.
+  if (!isValidUuid(user.id)) return { error: 'Session error' }
   const { data: catRow } = await supabase
     .from('categories')
     .select('id')
     .eq('id', data.category)
-    .or('user_id.is.null,user_id.eq.' + user.id)
+    .or(`user_id.is.null,user_id.eq.${user.id}`)
     .single()
   if (!catRow) {
     return { error: 'Invalid transaction category' }
@@ -115,11 +118,12 @@ export async function updateTransaction(id: string, data: {
 
   // Validate category exists and belongs to this user (or is a system category)
   if (!isValidUuid(data.category)) return { error: 'Invalid category' }
+  if (!isValidUuid(user.id)) return { error: 'Session error' }
   const { data: catRow } = await supabase
     .from('categories')
     .select('id')
     .eq('id', data.category)
-    .or('user_id.is.null,user_id.eq.' + user.id)
+    .or(`user_id.is.null,user_id.eq.${user.id}`)
     .single()
   if (!catRow) return { error: 'Invalid category' }
 

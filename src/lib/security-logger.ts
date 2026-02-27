@@ -2,7 +2,8 @@
  * Structured security event logger.
  *
  * Emits JSON-formatted log lines to stdout (captured by Vercel/container logs).
- * In production, pipe these to a SIEM or structured logging service.
+ * In production, set SECURITY_WEBHOOK_URL to a Slack/Discord/PagerDuty endpoint
+ * to receive real-time alerts for high-severity events.
  */
 
 export type SecurityEventType =
@@ -24,8 +25,17 @@ interface SecurityEvent {
   meta?: Record<string, unknown>
 }
 
+/** Events that warrant an immediate out-of-band alert. */
+const HIGH_SEVERITY_EVENTS: SecurityEventType[] = [
+  'auth:login_failure',
+  'rate_limit:exceeded',
+  'cron:unauthorized',
+  'data:unauthorized_access',
+]
+
 /**
  * Log a security-relevant event as structured JSON.
+ * High-severity events are also forwarded to SECURITY_WEBHOOK_URL if set.
  *
  * @example
  * logSecurityEvent({ event: 'auth:login_failure', ip: '1.2.3.4', meta: { email: 'masked' } })
@@ -39,4 +49,21 @@ export function logSecurityEvent(evt: SecurityEvent): void {
 
   // Use console.warn for security events so they stand out in log streams
   console.warn(JSON.stringify(entry))
+
+  // Fire-and-forget webhook alert for high-severity events
+  if (
+    HIGH_SEVERITY_EVENTS.includes(evt.event) &&
+    process.env.SECURITY_WEBHOOK_URL
+  ) {
+    fetch(process.env.SECURITY_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: `[Security Alert] \`${entry.event}\``,
+        attachments: [{ text: JSON.stringify(entry, null, 2) }],
+      }),
+    }).catch(() => {
+      // Never block the request path; swallow webhook errors silently
+    })
+  }
 }
