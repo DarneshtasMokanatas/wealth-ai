@@ -1,3 +1,5 @@
+import 'server-only'
+
 function requireEnv(value: string | undefined, name: string): string {
   if (!value?.trim()) {
     throw new Error(
