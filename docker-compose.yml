@@ -1,0 +1,41 @@
+services:
+  # ── Next.js application ───────────────────────────────────────────────────────
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # NEXT_PUBLIC_* vars must be available at build time so Next.js can
+      # inline them into the client bundle during `next build`.
+      args:
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL:-}
+    env_file:
+      - .env.local
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health 2>/dev/null || wget -qO- http://localhost:3000 2>/dev/null | grep -q '<html' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ── Cron sidecar ─────────────────────────────────────────────────────────────
+  # Replaces the Vercel cron defined in vercel.json.
+  # Hits POST /api/cron/process-recurring every day at midnight UTC.
+  cron:
+    image: alpine:3.19
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+    env_file:
+      - .env.local
+    # Alpine's busybox crond reads from /etc/crontabs/<user>
+    command: >
+      sh -c "
+        echo '0 0 * * * wget -qO- --header=\"Authorization: Bearer $${CRON_SECRET}\" http://app:3000/api/cron/process-recurring > /proc/1/fd/1 2>&1' > /etc/crontabs/root
+        && crond -f -L /dev/stdout
+      "

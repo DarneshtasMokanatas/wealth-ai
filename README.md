@@ -38,7 +38,7 @@ A premium personal finance dashboard built with **Next.js 16**, **Supabase**, an
 | Charts | [Recharts](https://recharts.org/) |
 | AI | [Google Gemini](https://ai.google.dev/) (`gemini-2.5-flash`) |
 | Icons | [Lucide React](https://lucide.dev/) |
-| Deployment | [Vercel](https://vercel.com/) |
+| Deployment | [Vercel](https://vercel.com/) / [Docker](https://www.docker.com/) |
 
 ## Getting Started
 
@@ -157,16 +157,72 @@ npm run test       # Run Vitest tests
 
 All four quality gate commands (`lint`, `typecheck`, `test`, `build`) must pass before any release.
 
+## Docker
+
+The project ships with a production-ready multi-stage `Dockerfile` and a `docker-compose.yml` for easy self-hosting.
+
+### Quick start
+
+```bash
+# 1. Copy and fill in credentials
+cp .env.example .env.local
+
+# 2. Build and start (app + cron sidecar)
+docker compose up --build
+```
+
+The app will be available at [http://localhost:3000](http://localhost:3000).
+
+### How it works
+
+| Stage | Base image | Purpose |
+|---|---|---|
+| `deps` | `node:20-alpine` | Install production-only dependencies |
+| `builder` | `node:20-alpine` | Full install + `next build` (standalone output) |
+| `runner` | `node:20-alpine` | Minimal server — only the standalone bundle (~150 MB) |
+
+`NEXT_PUBLIC_*` variables are baked into the client bundle at **build time**. Pass them as build args:
+
+```bash
+docker compose build \
+  --build-arg NEXT_PUBLIC_SUPABASE_URL=https://your-ref.supabase.co \
+  --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+```
+
+Or simply set them in `.env.local` — `docker-compose.yml` forwards them automatically.
+
+### Cron sidecar
+
+The `cron` service (Alpine + `crond`) replaces the Vercel Cron defined in `vercel.json`. It fires `GET /api/cron/process-recurring` every day at **midnight UTC**, authenticated via `Authorization: Bearer $CRON_SECRET`.
+
+Test it manually at any time:
+
+```bash
+curl -H "Authorization: Bearer <CRON_SECRET>" http://localhost:3000/api/cron/process-recurring
+```
+
+---
+
 ## Cron Job
 
-The endpoint `POST /api/cron/process-recurring` processes due recurring transactions. Set up a scheduled job (e.g. Vercel Cron) to call it daily with the `Authorization: Bearer <CRON_SECRET>` header.
+The endpoint `POST /api/cron/process-recurring` processes due recurring transactions. Set up a scheduled job (e.g. Vercel Cron or the included Docker cron sidecar) to call it daily with the `Authorization: Bearer <CRON_SECRET>` header.
 
 ## Production Deployment
 
-1. Set all required environment variables in your deployment platform
+### Vercel
+
+1. Set all required environment variables in the Vercel dashboard
 2. Run all 14 migrations against your production Supabase project
 3. Configure the Supabase Auth redirect URL to match `NEXT_PUBLIC_SITE_URL`
-4. Add the cron job to run `POST /api/cron/process-recurring` daily
+4. Vercel Cron (configured in `vercel.json`) handles the daily recurring-transaction job
+5. Set `GEMINI_API_KEY` to enable the AI features
+
+### Docker (self-hosted)
+
+1. Copy `.env.example` → `.env.local` and fill in production values
+2. Run all 14 migrations against your Supabase project
+3. Configure the Supabase Auth redirect URL to match `NEXT_PUBLIC_SITE_URL`
+4. `docker compose up --build -d` — the cron sidecar handles the daily job automatically
 5. Set `GEMINI_API_KEY` to enable the AI features
 
 ## License

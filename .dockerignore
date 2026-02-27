@@ -1,0 +1,36 @@
+# Dependencies & build output
+node_modules
+.next
+out
+
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Environment files — never bake secrets into the image
+.env
+.env.*
+!.env.example
+
+# Supabase local dev files
+supabase
+
+# Local build artefacts
+app-build
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+.vscode
+.idea
+*.swp
+*.swo
+
+# Test / lint output
+coverage
+.nyc_output
+
+# Documentation
+*.md
+!README.md
