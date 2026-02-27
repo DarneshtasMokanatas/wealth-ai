@@ -163,15 +163,30 @@ The project ships with a production-ready multi-stage `Dockerfile` and a `docker
 
 ### Quick start
 
-```bash
+```powershell
 # 1. Copy and fill in credentials
 cp .env.example .env.local
+# Edit .env.local with your real Supabase URL, keys, and CRON_SECRET
 
 # 2. Build and start (app + cron sidecar)
-docker compose up --build
+.\docker.ps1 up --build
 ```
 
-The app will be available at [http://localhost:3000](http://localhost:3000).
+The app will be available at **http://localhost:3000**.
+
+> **Why `docker.ps1`?**  
+> Docker Compose v5 only auto-loads a file named `.env` for variable substitution — not `.env.local`.  
+> The included `docker.ps1` wrapper passes `--env-file .env.local` automatically so your credentials are picked up correctly for both build args and runtime.
+
+### Commands cheat sheet
+
+```powershell
+.\docker.ps1 up --build    # First run or after code changes
+.\docker.ps1 up            # Start without rebuilding
+.\docker.ps1 down          # Stop all containers
+.\docker.ps1 logs -f app   # Follow app logs
+.\docker.ps1 logs -f cron  # Follow cron logs
+```
 
 ### How it works
 
@@ -181,15 +196,7 @@ The app will be available at [http://localhost:3000](http://localhost:3000).
 | `builder` | `node:20-alpine` | Full install + `next build` (standalone output) |
 | `runner` | `node:20-alpine` | Minimal server — only the standalone bundle (~150 MB) |
 
-`NEXT_PUBLIC_*` variables are baked into the client bundle at **build time**. Pass them as build args:
-
-```bash
-docker compose build \
-  --build-arg NEXT_PUBLIC_SUPABASE_URL=https://your-ref.supabase.co \
-  --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
-```
-
-Or simply set them in `.env.local` — `docker-compose.yml` forwards them automatically.
+`NEXT_PUBLIC_*` variables are baked into the client bundle at **build time**. They are read from `.env.local` and forwarded as Docker build args by `docker-compose.yml` automatically.
 
 ### Cron sidecar
 
@@ -197,7 +204,7 @@ The `cron` service (Alpine + `crond`) replaces the Vercel Cron defined in `verce
 
 Test it manually at any time:
 
-```bash
+```powershell
 curl -H "Authorization: Bearer <CRON_SECRET>" http://localhost:3000/api/cron/process-recurring
 ```
 
@@ -222,7 +229,7 @@ The endpoint `POST /api/cron/process-recurring` processes due recurring transact
 1. Copy `.env.example` → `.env.local` and fill in production values
 2. Run all 14 migrations against your Supabase project
 3. Configure the Supabase Auth redirect URL to match `NEXT_PUBLIC_SITE_URL`
-4. `docker compose up --build -d` — the cron sidecar handles the daily job automatically
+4. Run `.\docker.ps1 up --build -d` — the cron sidecar handles the daily job automatically
 5. Set `GEMINI_API_KEY` to enable the AI features
 
 ## License

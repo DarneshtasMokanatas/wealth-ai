@@ -15,12 +15,6 @@ services:
     ports:
       - "3000:3000"
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health 2>/dev/null || wget -qO- http://localhost:3000 2>/dev/null | grep -q '<html' || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
   # ── Cron sidecar ─────────────────────────────────────────────────────────────
   # Replaces the Vercel cron defined in vercel.json.
@@ -34,8 +28,8 @@ services:
     env_file:
       - .env.local
     # Alpine's busybox crond reads from /etc/crontabs/<user>
-    command: >
-      sh -c "
-        echo '0 0 * * * wget -qO- --header=\"Authorization: Bearer $${CRON_SECRET}\" http://app:3000/api/cron/process-recurring > /proc/1/fd/1 2>&1' > /etc/crontabs/root
-        && crond -f -L /dev/stdout
-      "
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "0 0 * * * wget -qO- --header='Authorization: Bearer $${CRON_SECRET}' http://app:3000/api/cron/process-recurring" > /etc/crontabs/root
+        crond -f -L /dev/stdout
